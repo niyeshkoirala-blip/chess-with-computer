@@ -18,13 +18,7 @@ h1 {
 }
 
 /* ── Chess board ── */
-#chess-board {
-  display: grid;
-  grid-template-columns: repeat(8, 60px);
-  grid-template-rows: repeat(8, 60px);
-  border: 3px solid #333;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
+
 
 /* ── Individual squares ── */
 .square {
@@ -43,3 +37,71 @@ h1 {
 .dark {
   background-color: #743a01;
 }
+.check{
+  background-color: #ff4d4d !important;
+}
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #8d2121;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  display: grid;
+  grid-template-columns: repeat(2, 80px); 
+  gap: 20px;
+  font-size: 20px;
+  z-index: 1000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display : none; /* Hidden by default */
+}
+
+/* Style each grid item */
+.modal div {
+  text-align: center;
+  padding: 10px;
+  border: 2px solid #ccc;   /* adds border */
+  border-radius: 6px;       /* rounded corners */
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Hover effect */
+.modal div:hover {
+  background-color: #f9f9f9;
+  border-color: #888;
+  cursor: pointer;
+}
+.chess-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start; /* align tops */
+  gap: 20px; /* spacing between board and containers */
+}
+
+#chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, 60px);
+  grid-template-rows: repeat(8, 60px);
+  border: 3px solid #333;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.eaten-white, .eaten-black {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  width: 120px;   /* fixed width */
+  height: 480px;  /* same as board height (8 × 60px) */
+  border: 2px solid #333;
+  background-color: #e5d5d5;
+  color: rgb(18, 2, 2);
+  font-size: 30px;
+  gap: 5px;
+  box-sizing: border-box;
+}
+
+
+

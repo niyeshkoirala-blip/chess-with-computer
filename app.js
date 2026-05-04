@@ -1,6 +1,8 @@
+const { movecheck } = require('./movecheck');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+let islegal;
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -19,8 +21,17 @@ const server = http.createServer((req, res) => {
       req.on('end', () => {
         const moveData = JSON.parse(body);
         console.log('Received move data from client:', moveData);
+        const movecheckResult = movecheck(moveData);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'Move received' }));
+             console.log( movecheckResult.eatenpeices);
+        res.end(JSON.stringify({
+          status: 'Move received',
+          islegal: movecheckResult.islegal,
+          state: movecheckResult.state,
+          eatenpeices: movecheckResult.eatenpeices,
+          eatencolor: movecheckResult.eatencolor
+     
+        }));
       });
     }
     else {
@@ -42,7 +53,7 @@ const server = http.createServer((req, res) => {
     }
     
   });
-}
+}  
 });
 
 server.listen(3000, () => {
