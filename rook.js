@@ -70,8 +70,8 @@ const { aftereat } = require('./edible.js');
   }  
 
     else {
-      return { islegal: false, state: 'fine' }; 
+      return { islegal: false, state: 'fine0' }; 
     }
   }
   
-exports .rook = rook
+exports .rook = rook;

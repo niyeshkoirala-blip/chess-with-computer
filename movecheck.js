@@ -1,6 +1,10 @@
   // Global arrays declared once
+  const { bishop } = require('./bishop.js');
   const { rook } = require('./rook.js');
   const { pawn }  = require('./pawn.js');
+  const { queen } = require('./queen.js');
+  const { knight }= require('./knight.js')
+  const { king } = require('./king.js')
   const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
   const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
   const allpieces = blackpieces.concat(whitepieces);
@@ -14,10 +18,24 @@
       return pawn(moveData);
     } 
     else if(piece === "♖" || piece === "♜"){
-      console.log(rook(moveData));
+    
         return rook(moveData);
       
     }
+     else if(piece === "♝" || piece === "♗"){
+        return bishop(moveData);
+     }
+     else if(piece === "♛" || piece === "♕"){
+      return queen(moveData);
+
+     }
+    else if (piece === "♞" || piece === "♘"){
+      return knight(moveData);
+    }
+     else if (piece === "♚" || piece === "♔"){
+      return king(moveData);
+    }
+
     else{
       return {islegal: true , state :'fine'}
     }

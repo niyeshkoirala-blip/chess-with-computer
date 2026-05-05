@@ -20,10 +20,9 @@ const server = http.createServer((req, res) => {
       });
       req.on('end', () => {
         const moveData = JSON.parse(body);
-        console.log('Received move data from client:', moveData);
         const movecheckResult = movecheck(moveData);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-             console.log( movecheckResult.eatenpeices);
+             
         res.end(JSON.stringify({
           status: 'Move received',
           islegal: movecheckResult.islegal,
