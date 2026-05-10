@@ -19,7 +19,7 @@
     }
     else if (blackpieces.includes(piece)) {
       if (whitepieces.includes(boardstate[to.row][to.col])) {
-        console.log(aftereatResult.eatenpeices)
+       
         return {
           islegal: true,
           state: 'fine',
@@ -41,7 +41,6 @@
     const eatenpiece = boardstate[to.row][to.col];
 
     if (blackpieces.includes(eatenpiece)) {
-      console.log("hello hi");
     
       return { color: "black", eatenpeices: eatenpiece };
     } else if (whitepieces.includes(eatenpiece)) {

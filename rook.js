@@ -5,6 +5,9 @@ const { aftereat } = require('./edible.js');
   const allpieces = blackpieces.concat(whitepieces);
   function rook(moveData){
     const { from, to, piece, boardstate, turn, state } = moveData;
+      if(moveData.real !== "fake" && (piece === "♜" || piece === "♖")){
+    piece === "♜" ? global.blackcastle = false : global.whitecastle = false;
+}
       let edibleResult = edible(moveData);
       let empty = 0;
         let middlerows = (Math.abs(from.row - to.row))-1; 
