@@ -202,7 +202,7 @@ function requestBotMove() {
 
   botThinking = true;
 
-  fetch('/bot', {
+  fetch('https://chess-with-computer.onrender.com/bot', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -290,7 +290,7 @@ document.querySelectorAll('.square').forEach(square => {
       if (clickCount === 2) {
         document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
 
-        fetch('/move', {
+        fetch('https://chess-with-computer.onrender.com/move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

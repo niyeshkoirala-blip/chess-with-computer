@@ -1,3 +1,8 @@
+import cors from "cors";
+
+app.use(cors({
+  origin: "chess-with-computer.vercel.app"
+}));
 const { movecheck } = require('./movecheck');
 const { botmove, evaluateMove }= require('./bot.js');
 const { check } = require('./check2.js');
@@ -166,7 +171,7 @@ const server = http.createServer((req, res) => {
     }
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
