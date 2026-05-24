@@ -1,32 +1,46 @@
 const { movecheck } = require('./movecheck');
+const { botmove, evaluateMove }= require('./bot.js');
 const { check } = require('./check2.js');
-const { checkmate}= require('./checkmate.js')
-const { getBotMove } = require('./bot');
+const { checkmate } = require('./checkmate.js');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+const frontEndFolder = path.join(__dirname, 'front end');
 
 function cloneBoard(boardstate) {
     return boardstate.map(row => [...row]);
-} 
+}
 
 const mimeTypes = {
     '.html': 'text/html',
-    '.css': 'text/css',
-    '.js': 'application/javascript',
+    '.css':  'text/css',
+    '.js':   'application/javascript',
 };
 
+function serveFile(filePath, res) {
+    const ext = path.extname(filePath);
+    const contentType = mimeTypes[ext] || 'text/plain';
+    fs.readFile(filePath, (err, data) => {
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not found');
+        } else {
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(data);
+        }
+    });
+}
+
 const server = http.createServer((req, res) => {
+
     if (req.url === '/move' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
             const moveData = JSON.parse(body);
-            
-        
-            // Step 1: check piece movement rules
-            const movecheckResult = movecheck(moveData);     
+
+            const movecheckResult = movecheck(moveData);
 
             if (!movecheckResult || !movecheckResult.islegal) {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -34,9 +48,7 @@ const server = http.createServer((req, res) => {
                 return;
             }
 
-            // Step 1b: castling — verify king doesn't pass through check
             if (movecheckResult.state === 'castle') {
-                console.log("hello")
                 const row = moveData.from.row;
                 const myKing = moveData.turn === 'white' ? '♔' : '♚';
                 const throughCols = movecheckResult.castleSide === 'king' ? [4, 5, 6] : [4, 3, 2];
@@ -46,7 +58,7 @@ const server = http.createServer((req, res) => {
                     simB[row][col] = myKing;
                     simB[row][moveData.from.col] = null;
                     const cr = check(simB, moveData.turn);
-                    if (cr.islegal === false && moveData.state ==='check') { castleBlocked = true; break; }
+                    if (cr.islegal === false) { castleBlocked = true; break; }
                 }
                 if (castleBlocked) {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -63,34 +75,23 @@ const server = http.createServer((req, res) => {
                 }));
                 return;
             }
-            
-            // Step 2: simulate the move on a cloned board
+
             const simBoard = cloneBoard(moveData.boardstate);
             simBoard[moveData.to.row][moveData.to.col] = moveData.piece;
             simBoard[moveData.from.row][moveData.from.col] = null;
 
-            // handle en passant cleared square
             if (movecheckResult.clearedsquare) {
                 simBoard[movecheckResult.clearedsquare.row][movecheckResult.clearedsquare.col] = null;
             }
 
-            // Step 3: check both kings on the simulated board
             const checkResult = check(simBoard, moveData.turn);
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
 
             if (!checkResult.islegal) {
-               
-                // own king is in check — illegal move
-                res.end(JSON.stringify({
-                    islegal: false,
-                    state: 'check'
-                }));
+                res.end(JSON.stringify({ islegal: false, state: 'check' }));
 
             } else if (checkResult.state === 'check') {
-                
-                // enemy king is in check — test for checkmate
-                // checkmate() returns boolean
                 const isCheckmate = checkmate(simBoard, moveData.turn);
                 res.end(JSON.stringify({
                     islegal: true,
@@ -99,10 +100,8 @@ const server = http.createServer((req, res) => {
                     eatencolor: movecheckResult.eatencolor,
                     clearedsquare: movecheckResult.clearedsquare
                 }));
-                
+
             } else {
-                
-                // normal legal move — pass through 'fine' or 'upgrade'
                 res.end(JSON.stringify({
                     islegal: true,
                     state: movecheckResult.state,
@@ -112,29 +111,63 @@ const server = http.createServer((req, res) => {
                 }));
             }
         });
-        
-    } else {
-        global.blackcastle= true;
-global.whitecastle= true;
-        const filePath = req.url === '/'
-        ? path.join(__dirname, '/front end', 'chess.html')
-        : path.join(__dirname, '/front end', req.url);
 
-        const ext = path.extname(filePath);
-        const contentType = mimeTypes[ext] || 'text/plain';
+    } else if (req.url === '/bot' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const moveData = JSON.parse(body);
+                const bot = await botmove(moveData);
 
-        fs.readFile(filePath, (err, data) => {
-            if (err) {
-                res.writeHead(404, { 'Content-Type': 'text/plain' });
-                res.end('Not found');
-            } else {
-                res.writeHead(200, { 'Content-Type': contentType });
-                res.end(data);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(bot));
+            } catch (err) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    islegal: false,
+                    error: err.message
+                }));
             }
         });
+
+    } else if (req.url === '/evaluate' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const moveData = JSON.parse(body);
+                const evaluation = await evaluateMove(moveData);
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(evaluation));
+            } catch (err) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    label: 'Unrated',
+                    error: err.message
+                }));
+            }
+        });
+
+    } else {
+
+        if (req.url === '/' || req.url === '/index.html') {
+            serveFile(path.join(frontEndFolder, 'index.html'), res);
+
+        } else if (req.url.startsWith('/chess.html')) {
+            global.blackcastle = true;
+            global.whitecastle = true;
+            serveFile(path.join(frontEndFolder, 'chess.html'), res);
+
+        } else {
+            serveFile(path.join(frontEndFolder, req.url), res);
+        }
     }
 });
 
-server.listen(3000, () => {
-    console.log('Server running on http://localhost:4000');
+const port = process.env.PORT || 3000;
+
+server.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
 });

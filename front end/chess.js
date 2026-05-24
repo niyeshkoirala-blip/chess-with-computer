@@ -1,30 +1,159 @@
 const board = document.getElementById('chess-board');
 const upgradeModal = document.getElementById('upgrade-modal');
+const gameOverModal = document.getElementById('game-over-modal');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const turnBadge = document.getElementById('turnBadge');
+const surrenderButton = document.getElementById('surrenderButton');
+const moveEval = document.getElementById('moveEval');
+const moveHistory = document.getElementById('moveHistory');
 
-function upgradepiece(row, col) {
-  upgradeModal.style.display = 'block';
-  document.getElementById('upgrade-queen').onclick =() => {
-    boardstate[row][col] = turn !== 'white' ? '♕' : '♛';
-    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
-    upgradeModal.style.display = 'none';
-  }
-  document.getElementById('upgrade-rook').onclick =() => {
-    boardstate[row][col] = turn !== 'white' ? '♖' : '♜';
-    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
-    upgradeModal.style.display = 'none';
-  }
-  document.getElementById('upgrade-bishop').onclick =() => {
-    boardstate[row][col] = turn !== 'white' ? '♗' : '♝';
-    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
-    upgradeModal.style.display = 'none';
-  }
-  document.getElementById('upgrade-knight').onclick =() => {
-    boardstate[row][col] = turn !== 'white' ? '♘' : '♞';
-    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
-    upgradeModal.style.display = 'none';
-  }
+function showPromoModal() {
+  upgradeModal.style.display = 'flex';
+  modalBackdrop.classList.remove('hidden');
+}
+function compaftermove(data){
+    const toDiv = data.toDiv;
+    const fromDiv = data.fromDiv;
+    const state = data.state;
+    
+    toDiv.textContent = data.promotionPiece || fromDiv.textContent;
+            fromDiv.textContent = '';
+
+            if (data.clearedsquare) {
+              const clearedDiv = document.getElementById(`${data.clearedsquare.row}-${data.clearedsquare.col}`);
+              clearedDiv.textContent = '';
+              boardstate[data.clearedsquare.row][data.clearedsquare.col] = null;
+            }
+
+            if (state === 'castle' && data.rookTo) {
+              const rookSymbol = turn === 'white' ? '♖' : '♜';
+              const rookFromCol = data.castleSide === 'king' ? 7 : 0;
+              const rookRow = data.rookTo.row;
+              document.getElementById(`${rookRow}-${rookFromCol}`).textContent = '';
+              document.getElementById(`${rookRow}-${data.rookTo.col}`).textContent = rookSymbol;
+              boardstate[rookRow][rookFromCol] = null;
+              boardstate[rookRow][data.rookTo.col] = rookSymbol;
+            }
+
+            if (state === 'upgrade') {
+              upgradepiece(selectedSquare[1].row, selectedSquare[1].col);
+            }
+
+            document.querySelectorAll('.square').forEach(sq => sq.classList.remove('check'));
+            if (state === 'check') {
+              const enemyKing = turn === 'white' ? '♚' : '♔';
+              const kingSquare = Array.from(document.querySelectorAll('.square'))
+                .find(sq => sq.textContent === enemyKing);
+              if (kingSquare) kingSquare.classList.add('check');
+            }
+
+            turn = color[(color.indexOf(turn) + 1) % color.length];
+            updateTurnBadge();
 }
 
+function hidePromoModal() {
+  upgradeModal.style.display = 'none';
+  modalBackdrop.classList.add('hidden');
+}
+
+function showGameOver(title, subtitle) {
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSubtitle').textContent = subtitle;
+  gameOverModal.classList.remove('hidden');
+  modalBackdrop.classList.remove('hidden');
+}
+
+function updateTurnBadge() {
+  turnBadge.textContent = turn === 'white' ? "WHITE'S TURN" : "BLACK'S TURN";
+  turnBadge.classList.toggle('black-turn', turn === 'black');
+}
+
+function cloneBoard(board) {
+  return board.map(row => [...row]);
+}
+
+function coordsToSquare(coords) {
+  const file = String.fromCharCode('a'.charCodeAt(0) + coords.col);
+  const rank = 8 - coords.row;
+  return `${file}${rank}`;
+}
+
+function moveName(piece, from, to, capturedPiece) {
+  const captureMark = capturedPiece ? 'x' : '-';
+  return `${piece} ${coordsToSquare(from)}${captureMark}${coordsToSquare(to)}`;
+}
+
+function setMoveEval(label) {
+  moveEval.textContent = label.toUpperCase();
+}
+
+function addHistory(turnName, notation, label) {
+  moveCounter++;
+
+  const row = document.createElement('div');
+  row.className = 'history-row';
+  row.dataset.moveNumber = String(moveCounter);
+  row.innerHTML = `
+    <div class="history-number">${moveCounter}.</div>
+    <div class="history-main">
+      <div class="history-move">${turnName.toUpperCase()} ${notation}</div>
+      <div class="history-label">${label}</div>
+    </div>
+  `;
+  moveHistory.appendChild(row);
+  moveHistory.scrollTop = moveHistory.scrollHeight;
+  setMoveEval(label);
+
+  return moveCounter;
+}
+
+function updateHistoryLabel(moveNumber, label) {
+  const row = moveHistory.querySelector(`[data-move-number="${moveNumber}"]`);
+  if (!row) return;
+
+  row.querySelector('.history-label').textContent = label;
+  setMoveEval(label);
+}
+
+function evaluatePlayedMove(payload, moveNumber) {
+  fetch('/evaluate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(response => response.json())
+    .then(data => {
+      updateHistoryLabel(moveNumber, data.label || 'Unrated');
+    })
+    .catch(() => {
+      updateHistoryLabel(moveNumber, 'Unrated');
+    });
+}
+
+function upgradepiece(row, col) {
+  showPromoModal();
+
+  document.getElementById('upgrade-queen').onclick = () => {
+    boardstate[row][col] = turn !== 'white' ? '♕' : '♛';
+    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
+    hidePromoModal();
+  };
+  document.getElementById('upgrade-rook').onclick = () => {
+    boardstate[row][col] = turn !== 'white' ? '♖' : '♜';
+    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
+    hidePromoModal();
+  };
+  document.getElementById('upgrade-bishop').onclick = () => {
+    boardstate[row][col] = turn !== 'white' ? '♗' : '♝';
+    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
+    hidePromoModal();
+  };
+  document.getElementById('upgrade-knight').onclick = () => {
+    boardstate[row][col] = turn !== 'white' ? '♘' : '♞';
+    document.getElementById(`${row}-${col}`).textContent = boardstate[row][col];
+    hidePromoModal();
+  };
+}
 
 let boardstate = [
   ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"],
@@ -34,47 +163,133 @@ let boardstate = [
   [null, null, null, null, null, null, null, null],
   [null, null, null, null, null, null, null, null],
   ["♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"],
-  ["♖", "♘", "♗","♕" ,"♔" , "♗", "♘", "♖"]
+  ["♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"]
 ];
 
-for (let row = 0; row < 8; row++) { 
+for (let row = 0; row < 8; row++) {
   for (let col = 0; col < 8; col++) {
     const square = document.createElement('div');
     square.className = 'square';
     square.id = `${row}-${col}`;
     square.textContent = boardstate[row][col] || '';
-
-    if(row %2 === col %2) {
-      square.classList.add('light');
-    } else {
-      square.classList.add('dark');
-    }
+    square.classList.add((row % 2 === col % 2) ? 'light' : 'dark');
     board.appendChild(square);
   }
 }
 
 let color = ['white', 'black'];
 let turn = color[0];
-let blackpeices = ["♜", "♞", "♝", "♛", "♚", "♟"];
-let whitepeices = ["♖", "♘", "♗", "♕", "♔", "♙"];
-let allpeices = blackpeices.concat(whitepeices);
+let blackPieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
+let whitePieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
 let islegal;
 let state = "fine";
-let eatenpeicesblack = [];
-let eatenpeiceswhite = [];
+let capturedByBlack = [];
+let capturedByWhite = [];
 let selectedSquare = [{ row: null, col: null }, { row: null, col: null }];
-let nooftimes = 0;
+let clickCount = 0;
+let botThinking = false;
+let gameOver = false;
+let moveCounter = 0;
 const real = "real";
+
+const params = new URLSearchParams(window.location.search);
+
+const playerColor = params.get('playerColor');
+const mode = params.get('mode');
+
+function requestBotMove() {
+  if (gameOver || mode !== 'bot' || turn === playerColor || botThinking) return;
+
+  botThinking = true;
+
+  fetch('/bot', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      boardstate: boardstate,
+      turn: turn
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (gameOver) return;
+
+      if (!data.islegal || !data.from || !data.to) {
+        console.error(data.error || 'Bot did not return a legal move.');
+        return;
+      }
+
+      const movingTurn = turn;
+      const beforeBoard = cloneBoard(boardstate);
+      const capturedPiece = boardstate[data.to.row][data.to.col];
+      if (blackPieces.includes(capturedPiece)) {
+        capturedByBlack.push(capturedPiece);
+        document.getElementById('eatenBlack').textContent = capturedByBlack.join('');
+      } else if (whitePieces.includes(capturedPiece)) {
+        capturedByWhite.push(capturedPiece);
+        document.getElementById('eatenWhite').textContent = capturedByWhite.join('');
+      }
+
+      const movingPiece = boardstate[data.from.row][data.from.col];
+      const notation = moveName(movingPiece, data.from, data.to, capturedPiece);
+      boardstate[data.to.row][data.to.col] = data.promotionPiece || movingPiece;
+      boardstate[data.from.row][data.from.col] = null;
+
+      const fromDiv = document.getElementById(`${data.from.row}-${data.from.col}`);
+      const toDiv = document.getElementById(`${data.to.row}-${data.to.col}`);
+      let compaftermovedata = {
+        fromDiv: fromDiv,
+        toDiv: toDiv,
+        castleSide: data.castleSide,
+        rookTo: data.rookTo,
+        state: data.state,
+        clearedsquare: data.clearedsquare,
+        promotionPiece: data.promotionPiece
+      };
+      compaftermove(compaftermovedata);
+      const afterBoard = cloneBoard(boardstate);
+      const historyNumber = addHistory(movingTurn, notation, 'Analyzing');
+      evaluatePlayedMove({
+        beforeBoard,
+        afterBoard,
+        turn: movingTurn,
+        from: data.from,
+        to: data.to,
+        promotionPiece: data.promotionPiece
+      }, historyNumber);
+    })
+    .catch(err => console.error('Bot move failed:', err))
+    .finally(() => {
+      botThinking = false;
+    });
+}
+
+requestBotMove();
 
 document.querySelectorAll('.square').forEach(square => {
   square.addEventListener('click', () => {
+    if (gameOver || botThinking || (mode === 'bot' && turn !== playerColor)) return;
+
     const [row, col] = square.id.split('-').map(Number);
-    let peice = boardstate[row][col];
-    if (blackpeices.includes(peice) && turn === 'black' || whitepeices.includes(peice) && turn === 'white' || nooftimes === 1) {
-      selectedSquare[nooftimes] = { row, col };
-      console.log(`Selected square: selectedSquare[${nooftimes}] = { row: ${row}, col: ${col} }`);
-      nooftimes++;
-      if (nooftimes === 2) {
+    const piece = boardstate[row][col];
+
+    if (blackPieces.includes(piece) && turn === 'black' ||
+        whitePieces.includes(piece) && turn === 'white' ||
+        clickCount === 1) {
+
+      if (clickCount === 0) {
+        document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
+        square.classList.add('selected');
+      }
+
+      selectedSquare[clickCount] = { row, col };
+      clickCount++;
+
+      if (clickCount === 2) {
+        document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
+
         fetch('/move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -90,78 +305,75 @@ document.querySelectorAll('.square').forEach(square => {
         })
         .then(response => response.json())
         .then(data => {
-          console.log('Data received from server:', data);
           islegal = data.islegal;
           state = data.state;
+          castleSide = data.castleSide;
+          rookTo = data.rookTo
 
           if (data.eatencolor === 'black') {
-            eatenpeicesblack.push(data.eatenpeices);
-            document.getElementsByClassName('eaten-black')[0].innerHTML = eatenpeicesblack.join(' ');
+            capturedByBlack.push(data.eatenpeices);
+            document.getElementById('eatenBlack').textContent = capturedByBlack.join('');
           } else if (data.eatencolor === 'white') {
-            eatenpeiceswhite.push(data.eatenpeices);
-            document.getElementsByClassName('eaten-white')[0].innerHTML = eatenpeiceswhite.join(' ');
+            capturedByWhite.push(data.eatenpeices);
+            document.getElementById('eatenWhite').textContent = capturedByWhite.join('');
           }
 
           if (state === 'checkmate') {
-            alert(`Checkmate! ${turn} wins!`);
-            nooftimes = 0;
+            gameOver = true;
+            showGameOver(`${turn.toUpperCase()} WINS`, 'The king has fallen. The game is over.');
+            clickCount = 0;
           } else if (state === 'stalemate') {
-            alert(`Stalemate! It's a draw!`);
-            nooftimes = 0;
+            gameOver = true;
+            showGameOver('STALEMATE', 'The board is silent. Neither side prevails.');
+            clickCount = 0;
           } else if (!islegal) {
-            alert('Illegal move! Please try again.');
-            nooftimes = 0;
+            clickCount = 0;
           } else {
-            // Move is legal — update the board visuals
+            const movingTurn = turn;
+            const beforeBoard = cloneBoard(boardstate);
+            const from = { ...selectedSquare[0] };
+            const to = { ...selectedSquare[1] };
+            const movingPiece = boardstate[from.row][from.col];
+            const capturedPiece = boardstate[to.row][to.col];
+            const notation = moveName(movingPiece, from, to, capturedPiece);
+
             boardstate[selectedSquare[1].row][selectedSquare[1].col] =
               boardstate[selectedSquare[0].row][selectedSquare[0].col];
             boardstate[selectedSquare[0].row][selectedSquare[0].col] = null;
 
-            let selecteddiv1 = document.getElementById(`${selectedSquare[0].row}-${selectedSquare[0].col}`);
-            let selecteddiv2 = document.getElementById(`${selectedSquare[1].row}-${selectedSquare[1].col}`);
-            selecteddiv2.textContent = selecteddiv1.textContent;
-            selecteddiv1.textContent = '';
-
-            // handle en passant cleared square
-            if (data.clearedsquare) {
-              const clearedDiv = document.getElementById(`${data.clearedsquare.row}-${data.clearedsquare.col}`);
-              clearedDiv.textContent = '';
-              boardstate[data.clearedsquare.row][data.clearedsquare.col] = null;
+            const fromDiv = document.getElementById(`${selectedSquare[0].row}-${selectedSquare[0].col}`);
+            const toDiv   = document.getElementById(`${selectedSquare[1].row}-${selectedSquare[1].col}`);
+           compaftermovedata ={ 
+              fromDiv : fromDiv,
+              toDiv : toDiv,
+              castleSide: castleSide,
+              rookTo : rookTo,
+              state : state,
+              clearedsquare : data.clearedsquare
             }
-
-            // handle castling — move rook visually (rook always starts at col 0 or 7)
-            if (state === 'castle' && data.rookTo) {
-              const rookSymbol = turn === 'white' ? '♖' : '♜';
-              const rookFromCol = data.castleSide === 'king' ? 7 : 0;
-              const rookRow = data.rookTo.row;
-              document.getElementById(`${rookRow}-${rookFromCol}`).textContent = '';
-              document.getElementById(`${rookRow}-${data.rookTo.col}`).textContent = rookSymbol;
-              boardstate[rookRow][rookFromCol] = null;
-              boardstate[rookRow][data.rookTo.col] = rookSymbol;
-            }
-
-            // handle pawn promotion
-            if (state === 'upgrade') {
-              upgradepiece(selectedSquare[1].row, selectedSquare[1].col);
-            }
-
-            // handle check highlight
-            if (state === 'check') {
-              const enemyKing = turn === 'white' ? '♚' : '♔';
-              document.querySelectorAll('.square').forEach(div => div.classList.remove('check'));
-              const squarewithking = Array.from(document.querySelectorAll('.square')).find(div => div.textContent === enemyKing);
-              if (squarewithking) squarewithking.classList.add('check');
-            } else {
-              document.querySelectorAll('.square').forEach(div => div.classList.remove('check'));
-            }
-
-            nooftimes = 0;
-            turn = color[(color.indexOf(turn) + 1) % color.length];
+            compaftermove(compaftermovedata);
+            const afterBoard = cloneBoard(boardstate);
+            const historyNumber = addHistory(movingTurn, notation, 'Analyzing');
+            evaluatePlayedMove({
+              beforeBoard,
+              afterBoard,
+              turn: movingTurn,
+              from,
+              to
+            }, historyNumber);
+            clickCount = 0;
+            requestBotMove();
           }
         });
       }
-    } else {
-      alert(`It's ${turn}'s turn! Please select a ${turn} piece.`);
     }
   });
+});
+
+surrenderButton.addEventListener('click', () => {
+  if (gameOver) return;
+
+  gameOver = true;
+  const winner = turn === 'white' ? 'BLACK' : 'WHITE';
+  showGameOver(`${winner} WINS`, `${turn.toUpperCase()} surrendered.`);
 });
