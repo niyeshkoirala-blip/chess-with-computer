@@ -1,8 +1,17 @@
 import cors from "cors";
+import express from "express";
+
+const app = express();
 
 app.use(cors({
-  origin: "chess-with-computer.vercel.app"
+  origin: "https://chess-with-computer.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true
 }));
+
+app.use(express.json());
+app.options("*", cors()); 
+
 const { movecheck } = require('./movecheck');
 const { botmove, evaluateMove }= require('./bot.js');
 const { check } = require('./check2.js');
