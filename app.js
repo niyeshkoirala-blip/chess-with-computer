@@ -1,16 +1,3 @@
-import cors from "cors";
-import express from "express";
-
-const app = express();
-
-app.use(cors({
-  origin: "https://chess-with-computer.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true
-}));
-
-app.use(express.json());
-app.options("*", cors()); 
 
 const { movecheck } = require('./movecheck');
 const { botmove, evaluateMove }= require('./bot.js');
@@ -134,6 +121,28 @@ const server = http.createServer((req, res) => {
                 const moveData = JSON.parse(body);
                 const bot = await botmove(moveData);
 
+                if (bot.islegal && bot.from && bot.to) {
+                    const simBoard = cloneBoard(moveData.boardstate);
+                    const piece = simBoard[bot.from.row][bot.from.col];
+                    simBoard[bot.to.row][bot.to.col] = bot.promotionPiece || piece;
+                    simBoard[bot.from.row][bot.from.col] = null;
+
+                    if (bot.state === 'castle' && bot.rookTo) {
+                        const rookFromCol = bot.castleSide === 'king' ? 7 : 0;
+                        simBoard[bot.from.row][bot.rookTo.col] = simBoard[bot.from.row][rookFromCol];
+                        simBoard[bot.from.row][rookFromCol] = null;
+                    }
+
+                    const checkResult = check(simBoard, moveData.turn);
+
+                    if (!checkResult.islegal) {
+                        bot.state = 'fine';
+                    } else if (checkResult.state === 'check') {
+                        const isCheckmate = checkmate(simBoard, moveData.turn);
+                        bot.state = isCheckmate ? 'checkmate' : 'check';
+                    }
+                }
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(bot));
             } catch (err) {
@@ -180,7 +189,7 @@ const server = http.createServer((req, res) => {
     }
 });
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

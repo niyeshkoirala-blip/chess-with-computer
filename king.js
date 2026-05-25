@@ -32,7 +32,6 @@ function king(moveData) {
         };
     } 
     else if(castlepossible === true && to.col === 2 && rowdif === 0){
-        console.log("bahena")
         for (let i = from.col - 1; i > 0; i-- ){
             if (boardstate[from.row][i] !== null) emptysquares++;
         }
@@ -44,7 +43,7 @@ function king(moveData) {
         }
     }
     else if(castlepossible === true && to.col === 6 && rowdif ===0){
-         console.log("bahena")
+
         
     
         for (let i = from.col + 1; i < 7; i++ ){

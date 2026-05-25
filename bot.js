@@ -1,4 +1,5 @@
 const { spawn } = require('child_process');
+const { log } = require('console');
 
 const pieceToFen = {
   '♔': 'K',
@@ -29,7 +30,7 @@ function boardToFen(boardstate, turn) {
       if (!square) {
         empty++;
       } else {
-        if (empty > 0) {
+        if (empty > 0) {         
           fenRow += empty;
           empty = 0;
         }
@@ -220,9 +221,10 @@ async function botmove(data) {
   if (bestMove.length === 5) {
     response.promotionPiece = promotionPieces[turn][bestMove[4]];
   }
-
+  console.log(response);
+  
   return response;
 }
 
-exports.botmove = botmove;
+exports.botmove = botmove;              
 exports.evaluateMove = evaluateMove;

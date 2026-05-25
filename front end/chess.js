@@ -202,7 +202,7 @@ function requestBotMove() {
 
   botThinking = true;
 
-  fetch('https://chess-with-computer.onrender.com/bot', {
+  fetch('/bot', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -248,6 +248,15 @@ function requestBotMove() {
         clearedsquare: data.clearedsquare,
         promotionPiece: data.promotionPiece
       };
+      if (data.state === 'checkmate') {
+        gameOver = true;
+        showGameOver(`${movingTurn.toUpperCase()} WINS`, 'The king has fallen. The game is over.');
+        return;
+      } else if (data.state === 'stalemate') {
+        gameOver = true;
+        showGameOver('STALEMATE', 'The board is silent. Neither side prevails.');
+        return;
+      }
       compaftermove(compaftermovedata);
       const afterBoard = cloneBoard(boardstate);
       const historyNumber = addHistory(movingTurn, notation, 'Analyzing');
@@ -290,7 +299,7 @@ document.querySelectorAll('.square').forEach(square => {
       if (clickCount === 2) {
         document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
 
-        fetch('https://chess-with-computer.onrender.com/move', {
+        fetch('/move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

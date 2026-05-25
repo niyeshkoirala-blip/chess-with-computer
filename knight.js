@@ -9,6 +9,16 @@ const { aftereat } = require('./edible.js');
     if(Math.abs(from.row-to.row)=== 2 && Math.abs(from.col - to.col)===1){
         return {islegal:true, state:'fine', eatenpeices: edibleResult.eatenpeices, eatencolor:edibleResult.eatencolor}
     }
+
+
+
+
+
+
+
+
+
+    
     else if(Math.abs(from.row-to.row)=== 1 && Math.abs(from.col - to.col)===2){
         return {islegal:true, state:'fine', eatenpeices: edibleResult.eatenpeices, eatencolor:edibleResult.eatencolor}
     } 
@@ -16,5 +26,5 @@ const { aftereat } = require('./edible.js');
         return { islegal:false , state: 'fine'}
     }
 
-  }
+  }      
   exports.knight=knight;
