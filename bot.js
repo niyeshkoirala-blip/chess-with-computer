@@ -1,5 +1,8 @@
 const { spawn } = require('child_process');
 const { log } = require('console');
+const { cloneBoard } = require('./cloneBoard.js')
+  const { check } = require('./check2.js');
+const { checkmate } = require('./checkmate.js');
 
 const pieceToFen = {
   '♔': 'K',
@@ -112,11 +115,19 @@ function classifyMove(loss, playedMove, bestMove) {
   return 'Blunder';
 }
 
-function askStockfish(fen, movetime = 500) {
-  return analyzeFen(fen, movetime).then(result => result.bestMove);
+const DIFFICULTY_CONFIG = {
+  1: { skillLevel: 1,  movetime: 50   },
+  2: { skillLevel: 5,  movetime: 150  },
+  3: { skillLevel: 10, movetime: 300  },
+  4: { skillLevel: 15, movetime: 800  },
+  5: { skillLevel: 20, movetime: 2000 },
+};
+
+function askStockfish(fen, movetime = 500, skillLevel = 20) {
+  return analyzeFen(fen, movetime, skillLevel).then(result => result.bestMove);
 }
 
-function analyzeFen(fen, movetime = 500) {
+function analyzeFen(fen, movetime = 500, skillLevel = 20) {
   return new Promise((resolve, reject) => {
     const stockfishPath = process.env.STOCKFISH_PATH || 'stockfish';
     const engine = spawn(stockfishPath);
@@ -147,6 +158,7 @@ function analyzeFen(fen, movetime = 500) {
         if (line === 'uciok') {
           send('isready');
         } else if (line === 'readyok') {
+          send(`setoption name Skill Level value ${skillLevel}`);
           send(`position fen ${fen}`);
           send(`go movetime ${movetime}`);
         } else if (line.includes(' score ')) {
@@ -193,9 +205,10 @@ async function evaluateMove(data) {
 }
 
 async function botmove(data) {
-  const { boardstate, turn } = data;
+  const { boardstate, turn, difficulty } = data;
+  const cfg = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG[3];
   const fen = boardToFen(boardstate, turn);
-  const bestMove = await askStockfish(fen);
+  const bestMove = await askStockfish(fen, cfg.movetime, cfg.skillLevel);
 
   if (!bestMove || bestMove === '(none)') {
     return { islegal: false, error: 'Stockfish did not find a move.' };
@@ -204,6 +217,8 @@ async function botmove(data) {
   const from = squareToCoords(bestMove.slice(0, 2));
   const to = squareToCoords(bestMove.slice(2, 4));
   const piece = boardstate[from.row][from.col];
+  const capturedPiece = boardstate[to.row][to.col];
+  
   const response = {
     islegal: true,
     from,
@@ -211,6 +226,20 @@ async function botmove(data) {
     state: 'fine',
     bestMove
   };
+
+  // Add captured piece info if any
+  if (capturedPiece) {
+    const whitepieces = ['♖', '♘', '♗', '♕', '♔', '♙'];
+    const blackpieces = ['♜', '♞', '♝', '♛', '♚', '♟'];
+    
+    if (whitepieces.includes(capturedPiece)) {
+      response.eatencolor = 'white';
+      response.eatenpeices = capturedPiece;
+    } else if (blackpieces.includes(capturedPiece)) {
+      response.eatencolor = 'black';
+      response.eatenpeices = capturedPiece;
+    }
+  }
 
   if ((piece === '♔' || piece === '♚') && Math.abs(from.col - to.col) === 2) {
     response.state = 'castle';
@@ -221,8 +250,21 @@ async function botmove(data) {
   if (bestMove.length === 5) {
     response.promotionPiece = promotionPieces[turn][bestMove[4]];
   }
-  console.log(response);
-  
+     let simboard = cloneBoard(data.boardstate);
+      simboard[to.row][to.col]  =  simboard[from.row][from.col]
+      simboard[from.row][from.col] = null;
+      checkresult = check(simboard,data.turn);
+      if (checkresult.islegal === true  && checkresult.state ==='check') {
+         checkmateresult = checkmate(simboard,data.turn);
+         if (checkmateresult){
+          response.state = 'checkmate';
+         }
+         else {
+          response.state = 'check'
+         }
+       }
+   
+
   return response;
 }
 

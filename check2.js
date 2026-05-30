@@ -1,9 +1,9 @@
-const { movecheck } = require("./movecheck.js");
 
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
 
 function isKingInCheck(boardstate, kingcolor) {
+    const { movecheck } = require("./movecheck.js");
     // Find the king
     let kingslot;
     for (let i = 0; i < 8; i++) {

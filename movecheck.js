@@ -4,8 +4,12 @@
   const { pawn }  = require('./pawn.js');
   const { queen } = require('./queen.js');
   const { knight }= require('./knight.js')
-  const { king } = require('./king.js')
+  const { king } = require('./king.js');
   const{ enpassant } = require("./enpassant.js")
+  const { castlecheck } = require("./castlecheck.js");
+  const { check } = require('./check2.js');
+const { checkmate } = require('./checkmate.js');
+const { cloneBoard } = require('./cloneBoard.js')
   const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
   const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
   const allpieces = blackpieces.concat(whitepieces);
@@ -39,16 +43,45 @@
       result= knight(moveData);
     }
     else if (piece === "♚" || piece === "♔"){
-      result= king(moveData);
+      let kingresult = king(moveData);
+      if (kingresult && kingresult.state === "castle"){
+        const castleResult = castlecheck(moveData, kingresult);
+        if (castleResult && castleResult.islegal === true) {
+            result = castleResult;
+        } else {
+          result = { islegal: false , state: 'fine'};
+        }
+      } else {
+        result = kingresult || { islegal: false, state: 'fine' };
+      }
+
     }
-      
+         
     else{
-      result= {islegal: true , state :'fine'}
+      result= {islegal: false , state :'fine'}
     }
-    // After the result = piece_function(moveData) calls, before the isDoubleJump line:
-if (!result) {
-    return { islegal: false, state: 'fine' };
-}
+
+   let simboard = cloneBoard(moveData.boardstate);
+      simboard[moveData.to.row][moveData.to.col]  =  simboard[moveData.from.row][moveData.from.col]
+      simboard[moveData.from.row][moveData.from.col] = null;
+        if (result.islegal) {
+      checkresult = check(simboard,moveData.turn);
+      if (checkresult.islegal === true  && checkresult.state ==='check') {
+         checkmateresult = checkmate(simboard,moveData.turn);
+         if (checkmateresult){
+          result.state = 'checkmate';
+         }
+         else {
+          result.state = 'check'
+         }
+       }
+     else if(checkresult.islegal === false){
+          result.islegal = false;
+       }
+    }
+    else{
+     return { islegal: false, state: 'fine' };
+    }
      const isDoubleJump = (piece === "♙" && from.row === 6 && to.row === 4) ||
                          (piece === "♟" && from.row === 1 && to.row === 3);
 

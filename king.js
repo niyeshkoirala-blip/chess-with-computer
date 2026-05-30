@@ -1,12 +1,10 @@
 const { edible } = require('./edible.js');
-
+const { cloneBoard } = require('./cloneBoard.js')
 
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
 
-function cloneBoard(boardstate) {
-    return boardstate.map(row => [...row]);
-}
+
 
 
 function king(moveData) {
@@ -44,8 +42,6 @@ function king(moveData) {
     }
     else if(castlepossible === true && to.col === 6 && rowdif ===0){
 
-        
-    
         for (let i = from.col + 1; i < 7; i++ ){
             if (boardstate[from.row][i] !== null) emptysquares++;
         }
@@ -59,6 +55,7 @@ function king(moveData) {
     else {
         return { islegal: false, state: 'fine' };
     }       
+
 }
 
 exports.king = king;

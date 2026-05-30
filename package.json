@@ -5,7 +5,7 @@
   "main": "chess.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "STOCKFISH_PATH=/usr/games/stockfish nodemon app.js"
+    "start": "STOCKFISH_PATH=/usr/games/stockfish nodemon app2.js"
   },
   "author": "",
   "license": "ISC",

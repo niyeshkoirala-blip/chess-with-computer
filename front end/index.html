@@ -38,7 +38,7 @@
 
     <p class="step-label">Choose your battle</p>
 
-    <div class="mode-row">
+    <div class="mode-row" style="grid-template-columns: repeat(3, 1fr);">
       <div class="mode-card" id="cardVsBot" onclick="pickMode('bot')">
         <div class="selected-dot"></div>
         <div class="card-icon">🤖</div>
@@ -51,8 +51,38 @@
         <div class="card-title">VS A FRIEND</div>
         <div class="card-description">Sit across from another player. Let honor and skill decide the victor.</div>
       </div>
+      <div class="mode-card" id="cardBvb" onclick="pickMode('bvb')">
+        <div class="selected-dot"></div>
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">BOT VS BOT</div>
+        <div class="card-description">Watch two digital intellects clash. Orchestrate the parameters of their battle.</div>
+      </div>
     </div>
 
+    <!-- Speed picker (bvb only) -->
+    <div class="speed-picker hidden" id="speedPicker">
+      <p class="step-label" style="margin-top: 2rem;">Engine Cycle Delay</p>
+      <div class="speed-options">
+        <div class="speed-choice" id="speed500" onclick="pickSpeed(500)">
+          <span class="speed-val">0.5s</span>
+          <span class="speed-desc">Blitz Play</span>
+        </div>
+        <div class="speed-choice" id="speed1000" onclick="pickSpeed(1000)">
+          <span class="speed-val">1.0s</span>
+          <span class="speed-desc">Steady Pace</span>
+        </div>
+        <div class="speed-choice" id="speed1500" onclick="pickSpeed(1500)">
+          <span class="speed-val">3s</span>
+          <span class="speed-desc">Observation</span>
+        </div>
+        <div class="speed-choice" id="speed2000" onclick="pickSpeed(2000)">
+          <span class="speed-val">5s</span>
+          <span class="speed-desc">Learning</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color picker (bot mode only) -->
     <div class="color-picker hidden" id="colorPicker">
       <p class="step-label" style="margin-top: 0;">Your color</p>
       <div class="color-options">
@@ -75,6 +105,38 @@
       </div>
     </div>
 
+    <!-- Difficulty slider (bot + bvb modes) -->
+    <div class="difficulty-picker hidden" id="difficultyPicker">
+      <p class="step-label" style="margin-top: 0;">Engine Difficulty</p>
+      <div class="difficulty-control">
+        <div class="difficulty-track-wrap">
+          <div class="difficulty-labels">
+            <span>Novice</span>
+            <span>Easy</span>
+            <span>Medium</span>
+            <span>Hard</span>
+            <span>Master</span>
+          </div>
+          <div class="difficulty-track">
+            <div class="difficulty-fill" id="difficultyFill"></div>
+            <input type="range" min="1" max="5" value="3" step="1" class="difficulty-slider" id="difficultySlider">
+            <div class="difficulty-notches">
+              <span class="notch"></span>
+              <span class="notch"></span>
+              <span class="notch"></span>
+              <span class="notch"></span>
+              <span class="notch"></span>
+            </div>
+          </div>
+          <div class="difficulty-badge">
+            <span class="badge-level" id="badgeLevel">Medium</span>
+            <span class="badge-sep">·</span>
+            <span class="badge-desc" id="badgeDesc">Skill 10 · 300ms think time</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="start-wrap">
       <button class="start-button" id="startButton" onclick="startGame()" disabled>BEGIN THE MATCH</button>
     </div>
@@ -85,4 +147,4 @@
 
   <script src="Script.js"></script>
 </body>
-</html>   
+</html>

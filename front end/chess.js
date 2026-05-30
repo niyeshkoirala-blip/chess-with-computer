@@ -115,6 +115,11 @@ function updateHistoryLabel(moveNumber, label) {
   setMoveEval(label);
 }
 
+function renderCaptured(containerId, pieces) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = pieces.map(p => `<span class="captured-item">${p}</span>`).join('');
+}
+
 function evaluatePlayedMove(payload, moveNumber) {
   fetch('/evaluate', {
     method: 'POST',
@@ -196,21 +201,18 @@ const params = new URLSearchParams(window.location.search);
 
 const playerColor = params.get('playerColor');
 const mode = params.get('mode');
-
+const speed = params.get('speed');
+const difficulty = Number(params.get('difficulty')) || 3;
 function requestBotMove() {
-  if (gameOver || mode !== 'bot' || turn === playerColor || botThinking) return;
+
+  if (gameOver || botThinking ) return;
 
   botThinking = true;
 
   fetch('/bot', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      boardstate: boardstate,
-      turn: turn
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ boardstate: boardstate, turn: turn, difficulty: difficulty })
   })
     .then(response => response.json())
     .then(data => {
@@ -224,12 +226,14 @@ function requestBotMove() {
       const movingTurn = turn;
       const beforeBoard = cloneBoard(boardstate);
       const capturedPiece = boardstate[data.to.row][data.to.col];
-      if (blackPieces.includes(capturedPiece)) {
-        capturedByBlack.push(capturedPiece);
-        document.getElementById('eatenBlack').textContent = capturedByBlack.join('');
-      } else if (whitePieces.includes(capturedPiece)) {
-        capturedByWhite.push(capturedPiece);
-        document.getElementById('eatenWhite').textContent = capturedByWhite.join('');
+      
+      // Handle captured piece display for bot move
+      if (data.eatencolor === 'black') {
+        capturedByBlack.push(data.eatenpeices);
+        renderCaptured('eatenBlack', capturedByBlack);
+      } else if (data.eatencolor === 'white') {
+        capturedByWhite.push(data.eatenpeices);
+        renderCaptured('eatenWhite', capturedByWhite);
       }
 
       const movingPiece = boardstate[data.from.row][data.from.col];
@@ -239,6 +243,7 @@ function requestBotMove() {
 
       const fromDiv = document.getElementById(`${data.from.row}-${data.from.col}`);
       const toDiv = document.getElementById(`${data.to.row}-${data.to.col}`);
+      
       let compaftermovedata = {
         fromDiv: fromDiv,
         toDiv: toDiv,
@@ -248,18 +253,22 @@ function requestBotMove() {
         clearedsquare: data.clearedsquare,
         promotionPiece: data.promotionPiece
       };
+
       if (data.state === 'checkmate') {
         gameOver = true;
         showGameOver(`${movingTurn.toUpperCase()} WINS`, 'The king has fallen. The game is over.');
-        return;
+        return; 
       } else if (data.state === 'stalemate') {
         gameOver = true;
         showGameOver('STALEMATE', 'The board is silent. Neither side prevails.');
-        return;
+        return; 
       }
-      compaftermove(compaftermovedata);
+    
+      compaftermove(compaftermovedata); 
+      
       const afterBoard = cloneBoard(boardstate);
       const historyNumber = addHistory(movingTurn, notation, 'Analyzing');
+      
       evaluatePlayedMove({
         beforeBoard,
         afterBoard,
@@ -268,6 +277,11 @@ function requestBotMove() {
         to: data.to,
         promotionPiece: data.promotionPiece
       }, historyNumber);
+
+
+      if (data.islegal && mode === 'bvb') {
+         setTimeout(requestBotMove, speed);
+      }
     })
     .catch(err => console.error('Bot move failed:', err))
     .finally(() => {
@@ -275,109 +289,114 @@ function requestBotMove() {
     });
 }
 
-requestBotMove();
+if (mode === 'bvb' || (mode === 'bot' && turn !== playerColor)) {
+    requestBotMove();
+}
 
-document.querySelectorAll('.square').forEach(square => {
-  square.addEventListener('click', () => {
-    if (gameOver || botThinking || (mode === 'bot' && turn !== playerColor)) return;
 
-    const [row, col] = square.id.split('-').map(Number);
-    const piece = boardstate[row][col];
+ document.querySelectorAll('.square').forEach(square => {
+   square.addEventListener('click', () => {
+     if (gameOver || botThinking || (mode === 'bot' && turn !== playerColor)) return;
 
-    if (blackPieces.includes(piece) && turn === 'black' ||
-        whitePieces.includes(piece) && turn === 'white' ||
-        clickCount === 1) {
+     const [row, col] = square.id.split('-').map(Number);
+     const piece = boardstate[row][col];
 
-      if (clickCount === 0) {
-        document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
-        square.classList.add('selected');
-      }
+     if (blackPieces.includes(piece) && turn === 'black' ||
+         whitePieces.includes(piece) && turn === 'white' ||
+         clickCount === 1) {
 
-      selectedSquare[clickCount] = { row, col };
-      clickCount++;
+       if (clickCount === 0) {
+         document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
+         square.classList.add('selected');
+       }
 
-      if (clickCount === 2) {
-        document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
+       selectedSquare[clickCount] = { row, col };
+       clickCount++;
 
-        fetch('/move', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: selectedSquare[0],
-            to: selectedSquare[1],
-            piece: boardstate[selectedSquare[0].row][selectedSquare[0].col],
-            turn: turn,
-            boardstate: boardstate,
-            state: state,
-            real: real,
-          })
-        })
-        .then(response => response.json())
-        .then(data => {
-          islegal = data.islegal;
-          state = data.state;
-          castleSide = data.castleSide;
-          rookTo = data.rookTo
+       if (clickCount === 2) {
+         document.querySelectorAll('.square').forEach(sq => sq.classList.remove('selected'));
 
-          if (data.eatencolor === 'black') {
-            capturedByBlack.push(data.eatenpeices);
-            document.getElementById('eatenBlack').textContent = capturedByBlack.join('');
-          } else if (data.eatencolor === 'white') {
-            capturedByWhite.push(data.eatenpeices);
-            document.getElementById('eatenWhite').textContent = capturedByWhite.join('');
-          }
+         fetch('/move', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             from: selectedSquare[0],
+             to: selectedSquare[1],
+             piece: boardstate[selectedSquare[0].row][selectedSquare[0].col],
+             turn: turn,
+             boardstate: boardstate,
+             state: state,
+             real: real,
+           })
+         })
+         .then(response => response.json())
+         .then(data => {
+           islegal = data.islegal;
+           state = data.state;
+           castleSide = data.castleSide;
+           rookTo = data.rookTo
 
-          if (state === 'checkmate') {
-            gameOver = true;
-            showGameOver(`${turn.toUpperCase()} WINS`, 'The king has fallen. The game is over.');
-            clickCount = 0;
-          } else if (state === 'stalemate') {
-            gameOver = true;
-            showGameOver('STALEMATE', 'The board is silent. Neither side prevails.');
-            clickCount = 0;
-          } else if (!islegal) {
-            clickCount = 0;
-          } else {
-            const movingTurn = turn;
-            const beforeBoard = cloneBoard(boardstate);
-            const from = { ...selectedSquare[0] };
-            const to = { ...selectedSquare[1] };
-            const movingPiece = boardstate[from.row][from.col];
-            const capturedPiece = boardstate[to.row][to.col];
-            const notation = moveName(movingPiece, from, to, capturedPiece);
+           if (data.eatencolor === 'black') {
+             capturedByBlack.push(data.eatenpeices);
+             renderCaptured('eatenBlack', capturedByBlack);
+           } else if (data.eatencolor === 'white') {
+             capturedByWhite.push(data.eatenpeices);
+             renderCaptured('eatenWhite', capturedByWhite);
+           }
 
-            boardstate[selectedSquare[1].row][selectedSquare[1].col] =
-              boardstate[selectedSquare[0].row][selectedSquare[0].col];
-            boardstate[selectedSquare[0].row][selectedSquare[0].col] = null;
+           if (state === 'checkmate') {
+             gameOver = true;
+             showGameOver(`${turn.toUpperCase()} WINS`, 'The king has fallen. The game is over.');
+             clickCount = 0;
+           } else if (state === 'stalemate') {
+             gameOver = true;
+             showGameOver('STALEMATE', 'The board is silent. Neither side prevails.');
+             clickCount = 0;
+           } else if (!islegal) {
+             clickCount = 0;
+           } else {
+             const movingTurn = turn;
+             const beforeBoard = cloneBoard(boardstate);
+             const from = { ...selectedSquare[0] };
+             const to = { ...selectedSquare[1] };
+             const movingPiece = boardstate[from.row][from.col];
+             const capturedPiece = boardstate[to.row][to.col];
+             const notation = moveName(movingPiece, from, to, capturedPiece);
 
-            const fromDiv = document.getElementById(`${selectedSquare[0].row}-${selectedSquare[0].col}`);
-            const toDiv   = document.getElementById(`${selectedSquare[1].row}-${selectedSquare[1].col}`);
-           compaftermovedata ={ 
-              fromDiv : fromDiv,
-              toDiv : toDiv,
-              castleSide: castleSide,
-              rookTo : rookTo,
-              state : state,
-              clearedsquare : data.clearedsquare
-            }
-            compaftermove(compaftermovedata);
-            const afterBoard = cloneBoard(boardstate);
-            const historyNumber = addHistory(movingTurn, notation, 'Analyzing');
-            evaluatePlayedMove({
-              beforeBoard,
-              afterBoard,
-              turn: movingTurn,
-              from,
-              to
-            }, historyNumber);
-            clickCount = 0;
-            requestBotMove();
-          }
-        });
-      }
-    }
-  });
-});
+             boardstate[selectedSquare[1].row][selectedSquare[1].col] =
+               boardstate[selectedSquare[0].row][selectedSquare[0].col];
+             boardstate[selectedSquare[0].row][selectedSquare[0].col] = null;
+
+             const fromDiv = document.getElementById(`${selectedSquare[0].row}-${selectedSquare[0].col}`);
+             const toDiv   = document.getElementById(`${selectedSquare[1].row}-${selectedSquare[1].col}`);
+            compaftermovedata ={ 
+               fromDiv : fromDiv,
+               toDiv : toDiv,
+               castleSide: castleSide,
+               rookTo : rookTo,
+               state : state,
+               clearedsquare : data.clearedsquare
+             }
+             compaftermove(compaftermovedata);
+             const afterBoard = cloneBoard(boardstate);
+             const historyNumber = addHistory(movingTurn, notation, 'Analyzing');
+             evaluatePlayedMove({
+               beforeBoard,
+               afterBoard,
+               turn: movingTurn,
+               from,
+               to
+             }, historyNumber);
+             clickCount = 0;
+             requestBotMove();
+           }
+         });
+       }
+       console.log(boardstate);
+      
+     }
+   });
+ });
 
 surrenderButton.addEventListener('click', () => {
   if (gameOver) return;

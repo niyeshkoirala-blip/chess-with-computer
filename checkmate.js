@@ -1,14 +1,13 @@
-const { movecheck } = require('./movecheck');
+const { cloneBoard } = require('./cloneBoard.js')
 const { check } = require('./check2.js');
 
 
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
-function cloneBoard(boardstate) {
-    return boardstate.map(row => [...row]);
-}
+
 
 function checkmate(boardstate, turn) {
+    const { movecheck } = require('./movecheck');
     const enemyTurn = turn === 'white' ? 'black' : 'white';
     const enemyPieces = enemyTurn === 'white' ? whitepieces : blackpieces;
     
@@ -22,7 +21,7 @@ function checkmate(boardstate, turn) {
                 for (let toRow = 0; toRow < 8; toRow++) {
                     for (let toCol = 0; toCol < 8; toCol++) {
                         const fakemove = {
-                            from: { row: fromRow, col: fromCol },
+                            from: { row: fromRow, col: fromCol },  
                             to: { row: toRow, col: toCol },
                             piece: boardstate[fromRow][fromCol],
                             turn: enemyTurn,
