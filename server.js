@@ -1,5 +1,5 @@
-const { movecheck } = require('./movecheck');
-const { botmove, evaluateMove }= require('./bot.js');
+const { movecheck } = require('./backend/gameengine/movecheck.js');
+const { botmove, evaluateMove }= require('./backend/gameengine/bot.js');
 
 const express = require('express');
 const path= require('path');
@@ -47,6 +47,7 @@ app.post('/evaluate',async(req,res,next) =>{
                 })
             }
 })
+app
 
  app.use(express.static(frontEndFolder));
 

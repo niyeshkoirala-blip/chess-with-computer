@@ -9,6 +9,7 @@
   const { castlecheck } = require("./castlecheck.js");
   const { check } = require('./check2.js');
 const { checkmate } = require('./checkmate.js');
+const { stalemate } = require('./stalemate.js');
 const { cloneBoard } = require('./cloneBoard.js')
   const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
   const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
@@ -68,12 +69,17 @@ const { cloneBoard } = require('./cloneBoard.js')
       checkresult = check(simboard,moveData.turn);
       if (checkresult.islegal === true  && checkresult.state ==='check') {
          checkmateresult = checkmate(simboard,moveData.turn);
+         stalemateresult = stalemate(simboard);
          if (checkmateresult){
           result.state = 'checkmate';
          }
+         
          else {
           result.state = 'check'
          }
+       }
+       else if (checkresult.islegal === true  && checkresult.state ==='check'){
+          if (stalemateresult) result.state = 'stalemate';
        }
      else if(checkresult.islegal === false){
           result.islegal = false;

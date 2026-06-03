@@ -388,8 +388,10 @@ if (mode === 'bvb' || (mode === 'bot' && turn !== playerColor)) {
                to
              }, historyNumber);
              clickCount = 0;
-             requestBotMove();
+             if (mode === 'bot'){
+              requestBotMove();
            }
+          }
          });
        }
        console.log(boardstate);

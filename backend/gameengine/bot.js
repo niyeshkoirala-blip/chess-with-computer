@@ -3,6 +3,7 @@ const { log } = require('console');
 const { cloneBoard } = require('./cloneBoard.js')
   const { check } = require('./check2.js');
 const { checkmate } = require('./checkmate.js');
+const { stalemate } = require('./stalemate.js');
 
 const pieceToFen = {
   '♔': 'K',
@@ -254,6 +255,7 @@ async function botmove(data) {
       simboard[to.row][to.col]  =  simboard[from.row][from.col]
       simboard[from.row][from.col] = null;
       checkresult = check(simboard,data.turn);
+      stalemateresult = stalemate(boardstate);
       if (checkresult.islegal === true  && checkresult.state ==='check') {
          checkmateresult = checkmate(simboard,data.turn);
          if (checkmateresult){
@@ -262,6 +264,9 @@ async function botmove(data) {
          else {
           response.state = 'check'
          }
+       }
+       else if(checkresult.islegal === false){
+        if (stalemateresult) response.state = 'stalemate';
        }
    
 
