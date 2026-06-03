@@ -47,7 +47,7 @@ app.post('/evaluate',async(req,res,next) =>{
                 })
             }
 })
-app
+
 
  app.use(express.static(frontEndFolder));
 
