@@ -1,0 +1,27 @@
+[33mc9e3e07[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m refs/remotes/origin/main@{0}: update by push
+[33mc9e3e07[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m refs/heads/main@{0}: commit: l
+[33mc9e3e07[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: l
+[33m5c6c0dd[m refs/remotes/origin/main@{1}: update by push
+[33m5c6c0dd[m refs/heads/main@{1}: commit: h
+[33m5c6c0dd[m HEAD@{1}: commit: h
+[33ma76029b[m refs/remotes/origin/main@{2}: update by push
+[33ma76029b[m refs/heads/main@{2}: commit: added some feature
+[33ma76029b[m HEAD@{2}: commit: added some feature
+[33mf4965c9[m refs/remotes/origin/main@{3}: update by push
+[33mf4965c9[m refs/heads/main@{3}: commit: solved some bugs
+[33mf4965c9[m HEAD@{3}: commit: solved some bugs
+[33m1b1db40[m refs/remotes/origin/main@{4}: update by push
+[33m1b1db40[m refs/heads/main@{4}: commit: fix cors
+[33m1b1db40[m HEAD@{4}: commit: fix cors
+[33mda23e47[m refs/remotes/origin/main@{5}: update by push
+[33mda23e47[m refs/heads/main@{5}: commit: deploy test
+[33mda23e47[m HEAD@{5}: commit: deploy test
+[33m5588050[m refs/remotes/origin/main@{6}: update by push
+[33m5588050[m refs/heads/main@{6}: commit: remove node_modules from tracking
+[33m5588050[m HEAD@{6}: commit: remove node_modules from tracking
+[33m1a6f342[m refs/remotes/origin/main@{7}: update by push
+[33m1a6f342[m refs/heads/main@{7}: commit: i just made it bot integrated with stockfish and used ai for some fornt end
+[33m1a6f342[m HEAD@{7}: commit: i just made it bot integrated with stockfish and used ai for some fornt end
+[33m6ea4150[m refs/heads/main@{8}: clone: from https://github.com/niyeshkoirala-blip/chess-with-computer.git
+[33m6ea4150[m refs/remotes/origin/HEAD@{0}: clone: from https://github.com/niyeshkoirala-blip/chess-with-computer.git
+[33m6ea4150[m HEAD@{8}: clone: from https://github.com/niyeshkoirala-blip/chess-with-computer.git
