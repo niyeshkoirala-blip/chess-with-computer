@@ -46,7 +46,8 @@
     root.id = ASSET_ID;
     root.className = "auth-root";
     root.dataset.mode = "signup";
-    root.innerHTML = await loadWidgetHtml();
+   root.innerHTML = await loadWidgetHtml();
+root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
 
     document.body.appendChild(root);
     return root;
@@ -110,6 +111,7 @@
     }
 
     function open(mode) {
+      root.querySelector("[data-auth-overlay]").removeAttribute("inert");
       applyMode(mode);
       root.classList.add("is-open");
       document.body.style.overflow = "hidden";
@@ -122,6 +124,7 @@
     function close() {
       root.classList.remove("is-open");
       document.body.style.overflow = "";
+      root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
     }
 
     root.addEventListener("click", (event) => {

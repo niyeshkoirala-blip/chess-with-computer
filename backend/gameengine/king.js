@@ -54,8 +54,7 @@ function king(moveData) {
     }
     else {
         return { islegal: false, state: 'fine' };
-    }       
-
+    }    
 }
 
 exports.king = king;
