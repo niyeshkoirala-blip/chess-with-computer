@@ -1,19 +1,20 @@
 const { cloneBoard } = require('./cloneBoard.js')
 const { check } = require('./check2.js');
+const { getEngineContext } = require('./context.js');
 
 
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
 
 
-function checkmate(boardstate, turn) {
+function checkmate(boardstate, turn, contextInput) {
     const { movecheck } = require('./movecheck');
+    const context = getEngineContext({ context: contextInput });
     const enemyTurn = turn === 'white' ? 'black' : 'white';
     const enemyPieces = enemyTurn === 'white' ? whitepieces : blackpieces;
     
-    // Save and clear en passant state for clean simulation
-    const savedJump = new Map(global.jump);
-    global.jump.clear();
+    const savedJump = new Map(context.jump);
+    context.jump.clear();
 
     for (let fromRow = 0; fromRow < 8; fromRow++) {
         for (let fromCol = 0; fromCol < 8; fromCol++) {
@@ -27,7 +28,8 @@ function checkmate(boardstate, turn) {
                             turn: enemyTurn,
                             boardstate: boardstate,
                             state: 'fine',
-                            real: 'fake'
+                            real: 'fake',
+                            context
                         };
 
                         const moveResult = movecheck(fakemove);
@@ -39,9 +41,9 @@ function checkmate(boardstate, turn) {
                                 simBoard[moveResult.clearedsquare.row][moveResult.clearedsquare.col] = null;
                             }
 
-                            const checkresult = check(simBoard, enemyTurn);
+                            const checkresult = check(simBoard, enemyTurn, context);
                             if (checkresult.islegal) {
-                                global.jump = savedJump; // restore
+                                context.jump = savedJump;
                                 return false;
                             }
                         }
@@ -51,7 +53,7 @@ function checkmate(boardstate, turn) {
         }
     }
 
-    global.jump = savedJump; // restore
+    context.jump = savedJump;
     return true;
 }
 exports.checkmate = checkmate;

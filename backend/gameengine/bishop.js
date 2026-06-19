@@ -24,7 +24,7 @@ const { aftereat } = require('./edible.js');
       }
       }
     else{ 
-        return { islegal:false, state: 'fi0ne'}
+        return { islegal:false, state: 'fine'}
     }
     
   }

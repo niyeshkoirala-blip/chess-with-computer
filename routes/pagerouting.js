@@ -30,8 +30,6 @@ function sendFrontendPage(res, fileName) {
 }
 
 router.get('/chess.html', (req, res, next) => {
-   global.blackcastle = true;
-   global.whitecastle = true;
    sendFrontendPage(res, 'chess.html');
 });
 

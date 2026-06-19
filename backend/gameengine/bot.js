@@ -4,6 +4,7 @@ const { cloneBoard } = require('./cloneBoard.js')
   const { check } = require('./check2.js');
 const { checkmate } = require('./checkmate.js');
 const { stalemate } = require('./stalemate.js');
+const { getEngineContext } = require('./context.js');
 
 const pieceToFen = {
   '♔': 'K',
@@ -25,7 +26,7 @@ const promotionPieces = {
   black: { q: '♛', r: '♜', b: '♝', n: '♞' }
 };
 
-function boardToFen(boardstate, turn) {
+function boardToFen(boardstate, turn, contextInput) {
   const rows = boardstate.map(row => {
     let empty = 0;
     let fenRow = '';
@@ -47,20 +48,21 @@ function boardToFen(boardstate, turn) {
   });
 
   const activeColor = turn === 'white' ? 'w' : 'b';
-  const castling = getCastlingRights(boardstate);
+  const castling = getCastlingRights(boardstate, contextInput);
 
   return `${rows.join('/')} ${activeColor} ${castling} - 0 1`;
 }
 
-function getCastlingRights(boardstate) {
+function getCastlingRights(boardstate, contextInput) {
+  const context = getEngineContext({ context: contextInput });
   let rights = '';
 
-  if (global.whitecastle && boardstate[7][4] === '♔') {
+  if (context.whitecastle && boardstate[7][4] === '♔') {
     if (boardstate[7][7] === '♖') rights += 'K';
     if (boardstate[7][0] === '♖') rights += 'Q';
   }
 
-  if (global.blackcastle && boardstate[0][4] === '♚') {
+  if (context.blackcastle && boardstate[0][4] === '♚') {
     if (boardstate[0][7] === '♜') rights += 'k';
     if (boardstate[0][0] === '♜') rights += 'q';
   }
@@ -183,9 +185,10 @@ function analyzeFen(fen, movetime = 500, skillLevel = 20) {
 
 async function evaluateMove(data) {
   const { beforeBoard, afterBoard, turn, from, to, promotionPiece } = data;
+  const context = getEngineContext(data);
   const nextTurn = turn === 'white' ? 'black' : 'white';
-  const beforeFen = boardToFen(beforeBoard, turn);
-  const afterFen = boardToFen(afterBoard, nextTurn);
+  const beforeFen = boardToFen(beforeBoard, turn, context);
+  const afterFen = boardToFen(afterBoard, nextTurn, context);
   const [beforeResult, afterResult] = await Promise.all([
     analyzeFen(beforeFen, 350),
     analyzeFen(afterFen, 350)
@@ -207,8 +210,9 @@ async function evaluateMove(data) {
 
 async function botmove(data) {
   const { boardstate, turn, difficulty } = data;
+  const context = getEngineContext(data);
   const cfg = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG[3];
-  const fen = boardToFen(boardstate, turn);
+  const fen = boardToFen(boardstate, turn, context);
   const bestMove = await askStockfish(fen, cfg.movetime, cfg.skillLevel);
 
   if (!bestMove || bestMove === '(none)') {
@@ -254,10 +258,10 @@ async function botmove(data) {
      let simboard = cloneBoard(data.boardstate);
       simboard[to.row][to.col]  =  simboard[from.row][from.col]
       simboard[from.row][from.col] = null;
-      checkresult = check(simboard,data.turn);
-      stalemateresult = stalemate(boardstate);
+      checkresult = check(simboard,data.turn, context);
+      stalemateresult = stalemate(simboard, data.turn, context);
       if (checkresult.islegal === true  && checkresult.state ==='check') {
-         checkmateresult = checkmate(simboard,data.turn);
+         checkmateresult = checkmate(simboard,data.turn, context);
          if (checkmateresult){
           response.state = 'checkmate';
          }

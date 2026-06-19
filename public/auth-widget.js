@@ -66,6 +66,48 @@ root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
     const switchButton = root.querySelector("[data-auth-switch]");
     const dialogTitle = root.querySelector("#authDialogTitle");
     let switchTimer = null;
+    const headbar = root.querySelector(".auth-headbar");
+
+    function setFormMessage(form, message, isError) {
+      let el = form.querySelector(".auth-form-message");
+      if (!el) {  
+        el = document.createElement("p");
+        el.className = "auth-form-message";
+        form.appendChild(el);
+      }
+      el.textContent = message || "";
+      el.classList.toggle("is-error", Boolean(isError));
+    }
+
+    function renderUser(user) {
+      if (!headbar) return;
+
+      if (!user) {
+        headbar.innerHTML = `
+          <button class="auth-headbar-button" type="button" data-auth-open="login">Login</button>
+          <button class="auth-headbar-button" type="button" data-auth-open="signup">Signup</button>
+        `;
+        return;
+      }
+
+      headbar.innerHTML = `
+        <span class="auth-user-chip">${user.username}</span>
+        <button class="auth-headbar-button" type="button" data-auth-logout>Logout</button>
+      `;
+    }
+
+    async function requestJson(url, payload) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Request failed.");
+      }
+      return data;
+    }
 
     const messageByMode = {
       signup: {
@@ -131,6 +173,7 @@ root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
       const openButton = event.target.closest("[data-auth-open]");
       const closeButton = event.target.closest("[data-auth-close]");
       const switchModeButton = event.target.closest("[data-auth-switch]");
+      const logoutButton = event.target.closest("[data-auth-logout]");
 
       if (openButton) {
         open(openButton.dataset.authOpen);
@@ -148,12 +191,21 @@ root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
         }
       }
 
+      if (logoutButton) {
+        requestJson("/api/auth/logout")
+          .then(() => {
+            renderUser(null);
+            window.dispatchEvent(new CustomEvent("regicide:auth", { detail: { user: null } }));
+          })
+          .catch(() => {});
+      }
+
       if (event.target === overlay) {
         close();
       }
     });
 
-    root.addEventListener("submit", (event) => {
+    root.addEventListener("submit", async (event) => {
       const form = event.target.closest("[data-auth-form]");
       if (!form) {
         return;
@@ -162,12 +214,28 @@ root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
       event.preventDefault();
       const mode = form.dataset.authForm;
       const detail = formValues(form);
-      root.dispatchEvent(new CustomEvent(`regicide:${mode}`, { detail, bubbles: true }));
+      const submitButton = form.querySelector("button[type='submit']");
+      const originalText = submitButton ? submitButton.textContent : "";
 
-      if (mode === "signup") {
-        applyMode("login");
-      } else {
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = mode === "signup" ? "Creating..." : "Logging in...";
+        }
+
+        const data = await requestJson(`/api/auth/${mode}`, detail);
+        renderUser(data.user);
+        setFormMessage(form, "", false);
+        root.dispatchEvent(new CustomEvent(`regicide:${mode}`, { detail: data, bubbles: true }));
+        window.dispatchEvent(new CustomEvent("regicide:auth", { detail: data }));
         close();
+      } catch (err) {
+        setFormMessage(form, err.message, true);
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = originalText;
+        }
       }
     });
 
@@ -185,6 +253,11 @@ root.querySelector("[data-auth-overlay]").setAttribute("inert", "");
     };
 
     applyMode("signup");
+
+    fetch("/api/auth/me")
+      .then(response => response.json())
+      .then(data => renderUser(data.user))
+      .catch(() => renderUser(null));
   }
 
   async function start() {

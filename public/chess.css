@@ -323,6 +323,22 @@ body {
   background: rgba(220, 50, 50, 0.2);
 }
 
+.surrender-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.join-btn {
+  border-color: var(--border-lit);
+  background: var(--gold-dim);
+  color: var(--gold-bright);
+}
+
+.join-btn:hover {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.2);
+}
+
 .move-eval {
   min-height: 44px;
   border: 1px solid var(--border-dim);

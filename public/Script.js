@@ -138,23 +138,37 @@ function refreshStartButton() {
 }
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-function startGame() {
-  const q = new URLSearchParams();
-  q.set('mode', chosenMode);
-  q.set('difficulty', chosenDifficulty);
-
-  if (chosenMode === 'bot') {
-    q.set('playerColor', chosenColor);
-  } else if (chosenMode === 'bvb') {
-    q.set('speed', chosenSpeed);
-  }
-
+async function startGame() {
   const button = document.getElementById('startButton');
+  const originalText = button.textContent;
   button.textContent = 'ENTERING THE BOARD…';
   button.style.opacity = '0.7';
   button.disabled = true;
 
-  setTimeout(() => {
-    window.location.href = 'chess.html?' + q.toString();
-  }, 800);
+  try {
+    const response = await fetch('/api/games', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: chosenMode,
+        difficulty: chosenDifficulty,
+        playerColor: chosenColor,
+        speed: chosenSpeed,
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Could not create the game.');
+    }
+
+    window.location.href = `chess.html?gameId=${data.game.id}`;
+  } catch (err) {
+    button.textContent = err.message;
+    window.setTimeout(() => {
+      button.textContent = originalText;
+      button.style.opacity = '';
+      refreshStartButton();
+    }, 1800);
+  }
 }

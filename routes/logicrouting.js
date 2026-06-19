@@ -1,44 +1,109 @@
 const express = require('express');
-const { movecheck } = require('../backend/gameengine/movecheck.js');
-const { botmove, evaluateMove } = require('../backend/gameengine/bot.js');
+const Game = require('../models/Game.js');
+const {
+   snapshot,
+   createGame,
+   joinGame,
+   moveGame,
+   promoteGame,
+   makeBotMove,
+   surrenderGame,
+   listOpenGames,
+} = require('../services/gameService.js');
 
 const router = express.Router();
 
-router.post('/move', (req, res, next) => {
-   const moveData = req.body;
-   const movecheckResult = movecheck(moveData);
-   console.log(movecheckResult.islegal);
-
-   if (!movecheckResult || !movecheckResult.islegal) {
-      return res.json({ islegal: false, state: 'movecheckResult.state' });
-   }
-
-   return res.send(movecheckResult);
-});
-
-router.post('/bot', async (req, res, next) => {
-   const moveData = req.body;
-   const bot = await botmove(moveData);
-
-   if (!bot || !bot.islegal) {
-      return res.json({ islegal: false, state: 'bot.state' });
-   }
-
-   console.log(bot.state);
-   return res.send(bot);
-});
-
-router.post('/evaluate', async (req, res, next) => {
+async function findGame(req, res, next) {
    try {
-      const moveData = req.body;
-      const evaluation = await evaluateMove(moveData);
+      const game = await Game.findById(req.params.id);
+      if (!game) {
+         return res.status(404).json({ error: 'Game not found.' });
+      }
 
-      res.json(evaluation);
+      req.game = game;
+      next();
    } catch (err) {
-      res.json({
-         label: 'Unrated',
-         error: err.message
+      next(err);
+   }
+}
+
+router.get('/api/games/open', async (req, res, next) => {
+   try {
+      res.json({ games: await listOpenGames() });
+   } catch (err) {
+      next(err);
+   }
+});
+
+router.post('/api/games', async (req, res, next) => {
+   try {
+      const game = await createGame({
+         user: req.session.user,
+         mode: req.body.mode,
+         playerColor: req.body.playerColor,
+         difficulty: req.body.difficulty,
+         speed: req.body.speed,
       });
+
+      req.session.lastGameId = String(game._id);
+      res.status(201).json(snapshot(game, req.session.user));
+   } catch (err) {
+      next(err);
+   }
+});
+
+router.get('/api/games/:id', findGame, (req, res) => {
+   res.json(snapshot(req.game, req.session.user));
+});
+
+router.post('/api/games/:id/join', findGame, async (req, res, next) => {
+   try {
+      const game = await joinGame(req.game, req.session.user);
+      req.session.lastGameId = String(game._id);
+      res.json(snapshot(game, req.session.user));
+   } catch (err) {
+      next(err);
+   }
+});
+
+router.post('/api/games/:id/move', findGame, async (req, res, next) => {
+   try {
+      const { result, game } = await moveGame(req.game, req.session.user, {
+         from: req.body.from,
+         to: req.body.to,
+         promotion: req.body.promotion,
+      });
+
+      res.json(snapshot(game, req.session.user, { result }));
+   } catch (err) {
+      next(err);
+   }
+});
+
+router.post('/api/games/:id/promote', findGame, async (req, res, next) => {
+   try {
+      const { result, game } = await promoteGame(req.game, req.session.user, req.body.promotion);
+      res.json(snapshot(game, req.session.user, { result }));
+   } catch (err) {
+      next(err);
+   }
+});
+
+router.post('/api/games/:id/bot', findGame, async (req, res, next) => {
+   try {
+      const result = await makeBotMove(req.game);
+      res.json(snapshot(req.game, req.session.user, { result }));
+   } catch (err) {
+      next(err);
+   }
+});
+
+router.post('/api/games/:id/surrender', findGame, async (req, res, next) => {
+   try {
+      const game = await surrenderGame(req.game, req.session.user);
+      res.json(snapshot(game, req.session.user));
+   } catch (err) {
+      next(err);
    }
 });
 

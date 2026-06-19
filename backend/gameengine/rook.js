@@ -1,12 +1,14 @@
  const { edible } = require('./edible.js');
 const { aftereat } = require('./edible.js');
+const { getEngineContext } = require('./context.js');
  const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
   const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
   const allpieces = blackpieces.concat(whitepieces);
   function rook(moveData){
     const { from, to, piece, boardstate, turn, state } = moveData;
+      const context = getEngineContext(moveData);
       if(moveData.real !== "fake" && (piece === "♜" || piece === "♖")){
-    piece === "♜" ? global.blackcastle = false : global.whitecastle = false;
+    piece === "♜" ? context.blackcastle = false : context.whitecastle = false;
 }
       let edibleResult = edible(moveData);
       let empty = 0;
@@ -16,7 +18,7 @@ const { aftereat } = require('./edible.js');
           if(from.col < to.col){
             for(let i=from.col+1; i<to.col; i++){
               if(boardstate[from.row][i] === null){
-                empty++;
+                empty++;    
               }
             }
             if(empty === middlecols){
@@ -73,7 +75,7 @@ const { aftereat } = require('./edible.js');
   }  
 
     else {
-      return { islegal: false, state: 'fine0' }; 
+      return { islegal: false, state: 'fine' }; 
     }
   }
   

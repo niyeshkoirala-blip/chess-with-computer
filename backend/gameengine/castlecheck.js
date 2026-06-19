@@ -9,7 +9,7 @@ const { cloneBoard } = require('./cloneBoard.js')
                     const simB = cloneBoard(moveData.boardstate);
                     simB[row][col] = myKing;
                     simB[row][moveData.from.col] = null;
-                    const cr = check(simB, moveData.turn);
+                    const cr = check(simB, moveData.turn, moveData.context);
                     if (cr.islegal === false) { castleBlocked = true; break; }
                 }
                 if (castleBlocked) {

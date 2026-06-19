@@ -2,7 +2,7 @@
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
 
-function isKingInCheck(boardstate, kingcolor) {
+function isKingInCheck(boardstate, kingcolor, context) {
     const { movecheck } = require("./movecheck.js");
     // Find the king
     let kingslot;
@@ -28,7 +28,8 @@ function isKingInCheck(boardstate, kingcolor) {
                     turn: enemyturn,
                     boardstate: boardstate,
                     state: "fine",     
-                    real: "fake"
+                    real: "fake",
+                    context
                 };
                 let result = movecheck(fakemove);
                 if (result && result.islegal === true) return true;
@@ -38,12 +39,12 @@ function isKingInCheck(boardstate, kingcolor) {
     return false;
 }     
 
-function check(simBoard, turn) {
+function check(simBoard, turn, context) {
     const myKing    = turn === "white" ? "♔" : "♚";
     const enemyKing = turn === "white" ? "♚" : "♔";
  
-    const myKingInCheck    = isKingInCheck(simBoard, myKing);
-    const enemyKingInCheck = isKingInCheck(simBoard, enemyKing);
+    const myKingInCheck    = isKingInCheck(simBoard, myKing, context);
+    const enemyKingInCheck = isKingInCheck(simBoard, enemyKing, context);
 
     if (myKingInCheck) {
         // Move is illegal — own king is in check

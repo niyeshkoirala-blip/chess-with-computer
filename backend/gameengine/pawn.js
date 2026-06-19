@@ -1,15 +1,15 @@
 const { edible } = require('./edible.js');
 const { aftereat } = require('./edible.js');
 const { enpassant } = require('./enpassant.js');
+const { getEngineContext } = require('./context.js');
 
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
 const allpieces = blackpieces.concat(whitepieces);
 
-global.jump = new Map();
-
 function pawn(moveData) {
   const { from, to, piece, boardstate, turn, state } = moveData;
+  const context = getEngineContext(moveData);
   let edibleResult = edible(moveData);
   let passantresult = enpassant(moveData);
 
@@ -23,7 +23,7 @@ function pawn(moveData) {
       boardstate[from.row - 1][from.col] === null
     ) {
       if(moveData.real !== "fake"){
-      global.jump.set(`${to.row},${to.col}`, true);
+      context.jump.set(`${to.row},${to.col}`, true);
       }
       return { islegal: true, state: 'fine' };
       
@@ -89,7 +89,7 @@ function pawn(moveData) {
       boardstate[from.row + 1][from.col] === null
     ) {
   if(moveData.real !== "fake"){
-      global.jump.set(`${to.row},${to.col}`, true);
+      context.jump.set(`${to.row},${to.col}`, true);
   }
       return { islegal: true, state: 'fine' };
     }

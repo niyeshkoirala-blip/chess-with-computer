@@ -11,6 +11,7 @@
 const { checkmate } = require('./checkmate.js');
 const { stalemate } = require('./stalemate.js');
 const { cloneBoard } = require('./cloneBoard.js')
+const { getEngineContext } = require('./context.js');
   const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
   const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
   const allpieces = blackpieces.concat(whitepieces);
@@ -20,6 +21,7 @@ const { cloneBoard } = require('./cloneBoard.js')
   function movecheck(moveData) {
     
     const { from, to, piece, boardstate, turn, state , real } = moveData;
+    const context = getEngineContext(moveData);
     const mypeice = turn === "white" ? whitepieces : blackpieces;
     
 
@@ -62,14 +64,17 @@ const { cloneBoard } = require('./cloneBoard.js')
       result= {islegal: false , state :'fine'}
     }
 
+    if (moveData.real === "fake") {
+      return result || { islegal: false, state: 'fine' };
+    }
+
    let simboard = cloneBoard(moveData.boardstate);
       simboard[moveData.to.row][moveData.to.col]  =  simboard[moveData.from.row][moveData.from.col]
       simboard[moveData.from.row][moveData.from.col] = null;
         if (result.islegal) {
-      checkresult = check(simboard,moveData.turn);
+      checkresult = check(simboard,moveData.turn, context);
       if (checkresult.islegal === true  && checkresult.state ==='check') {
-         checkmateresult = checkmate(simboard,moveData.turn);
-         stalemateresult = stalemate(simboard);
+         checkmateresult = checkmate(simboard,moveData.turn, context);
          if (checkmateresult){
           result.state = 'checkmate';
          }
@@ -78,8 +83,8 @@ const { cloneBoard } = require('./cloneBoard.js')
           result.state = 'check'
          }
        }
-       else if (checkresult.islegal === true  && checkresult.state ==='check'){
-          if (stalemateresult) result.state = 'stalemate';
+       else if (checkresult.islegal === true && stalemate(simboard, moveData.turn, context)){
+          result.state = 'stalemate';
        }
      else if(checkresult.islegal === false){
           result.islegal = false;
@@ -92,7 +97,7 @@ const { cloneBoard } = require('./cloneBoard.js')
                          (piece === "♟" && from.row === 1 && to.row === 3);
 
     if (result.islegal===true && moveData.real!== "fake" && !isDoubleJump){
-      global.jump.clear();
+      context.jump.clear();
     }
     return result;
     

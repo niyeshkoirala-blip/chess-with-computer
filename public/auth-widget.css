@@ -59,6 +59,19 @@
   text-transform: uppercase;
 }
 
+.auth-user-chip {
+  border: 1px solid var(--auth-border);
+  background: rgba(201, 168, 76, 0.09);
+  color: var(--auth-champagne);
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: "Cinzel", serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+
 .auth-headbar-button:hover,
 .auth-headbar-button:focus-visible {
   border-color: var(--auth-border-lit);
@@ -380,6 +393,17 @@
   color: var(--auth-faint);
   font-size: 0.82rem;
   line-height: 1.35;
+}
+
+.auth-form-message {
+  color: var(--auth-gold-bright);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  min-height: 1.1rem;
+}
+
+.auth-form-message.is-error {
+  color: #f0a08f;
 }
 
 @media (max-width: 760px) {

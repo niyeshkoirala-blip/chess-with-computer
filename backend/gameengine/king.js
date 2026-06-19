@@ -1,5 +1,6 @@
 const { edible } = require('./edible.js');
 const { cloneBoard } = require('./cloneBoard.js')
+const { getEngineContext } = require('./context.js');
 
 const blackpieces = ["♜", "♞", "♝", "♛", "♚", "♟"];
 const whitepieces = ["♖", "♘", "♗", "♕", "♔", "♙"];
@@ -11,16 +12,17 @@ function king(moveData) {
     let emptysquares= 0;
     let possiblecheck = 0;
     const { from, to ,piece, boardstate} = moveData;
+    const context = getEngineContext(moveData);
     let edibleResult = edible(moveData);
     let fromcastleking = piece === "♔" ? {row: 7, col : 4} : {row: 0, col: 4};
-    let castlepossible = piece === "♚" ? global.blackcastle : global.whitecastle;
+    let castlepossible = piece === "♚" ? context.blackcastle : context.whitecastle;
     
 
     let rowdif = Math.abs(from.row - to.row);
     let coldif = Math.abs(from.col - to.col);
     if (rowdif < 2 && coldif < 2 && (rowdif + coldif) > 0 ) {
           if(moveData.real !== "fake"){
-        piece === "♚" ? global.blackcastle = false : global.whitecastle = false ;
+        piece === "♚" ? context.blackcastle = false : context.whitecastle = false ;
           }
         return {
             islegal: true,
@@ -35,10 +37,10 @@ function king(moveData) {
         }
         if(emptysquares === 0){
               if(moveData.real !== "fake"){
-            piece === "♚" ? global.blackcastle = false : global.whitecastle = false ;
+            piece === "♚" ? context.blackcastle = false : context.whitecastle = false ;
               }
             return {islegal: true, state : "castle", castleSide: 'queen'};
-        }
+        }  
     }
     else if(castlepossible === true && to.col === 6 && rowdif ===0){
 
@@ -47,7 +49,7 @@ function king(moveData) {
         }
         if(emptysquares === 0){
               if(moveData.real !== "fake"){
-            piece === "♚" ? global.blackcastle = false : global.whitecastle = false ;
+            piece === "♚" ? context.blackcastle = false : context.whitecastle = false ;
               }
             return {islegal: true, state : "castle", castleSide: 'king'};
         }
