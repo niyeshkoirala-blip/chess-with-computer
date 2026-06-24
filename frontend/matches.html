@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess — My Matches</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <span class="logo">♟ <span>Chess</span></span>
+  <div class="header-actions">
+    <a class="btn btn-ghost btn-sm" href="/">← Lobby</a>
+  </div>
+</header>
+
+<main id="matches-page">
+  <div class="matches-header">
+    <h1>My Matches</h1>
+    <p class="matches-sub">Last 3 games are auto-saved. Pin a match to keep it forever.</p>
+  </div>
+
+  <div id="matches-auth-guard" class="no-matches hidden">
+    <p>Sign in to see your match history.</p>
+    <a class="btn btn-primary" href="/" style="margin-top:16px;display:inline-block">Go to Lobby</a>
+  </div>
+
+  <div id="matches-loading" class="no-matches">Loading…</div>
+
+  <div id="matches-empty" class="no-matches hidden">
+    <p>No matches saved yet. Play a game to start recording your history!</p>
+  </div>
+
+  <div class="match-list" id="match-list"></div>
+</main>
+
+<div id="toast" class="hidden"></div>
+
+<script src="/js/matches.js"></script>
+</body>
+</html>

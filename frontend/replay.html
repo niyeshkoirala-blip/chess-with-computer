@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess — Replay</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <span class="logo">♟ <span>Chess</span></span>
+  <div class="header-actions">
+    <a class="btn btn-ghost btn-sm" href="/matches.html">← My Matches</a>
+  </div>
+</header>
+
+<main id="replay-page">
+  <div id="replay-loading" class="no-matches">Loading match…</div>
+  <div id="replay-error" class="no-matches hidden"></div>
+
+  <div id="replay-content" class="hidden">
+
+    <!-- Player info bar -->
+    <div class="replay-players">
+      <span id="rp-white">♙ White</span>
+      <span class="replay-vs">vs</span>
+      <span id="rp-black">♟ Black</span>
+      <span class="replay-result" id="rp-result"></span>
+    </div>
+
+    <div class="replay-layout">
+
+      <!-- Board area -->
+      <div class="board-wrap">
+        <div class="board-container">
+          <div id="replay-board"></div>
+        </div>
+
+        <!-- Step counter -->
+        <div class="replay-step-label" id="replay-step-label">Move 0 / 0</div>
+
+        <!-- Controls -->
+        <div class="replay-controls">
+          <button class="btn btn-secondary btn-sm" id="btn-prev">◀ Prev</button>
+          <button class="btn btn-primary btn-sm" id="btn-play">▶ Play</button>
+          <button class="btn btn-secondary btn-sm" id="btn-next">Next ▶</button>
+          <button class="btn btn-ghost btn-sm" id="btn-flip">⟳ Flip</button>
+        </div>
+
+        <!-- Speed selector -->
+        <div class="replay-speed-row">
+          <span class="replay-speed-label">Speed:</span>
+          <div class="speed-pills" id="speed-pills">
+            <div class="speed-pill" data-ms="1500">Slow</div>
+            <div class="speed-pill selected" data-ms="800">Normal</div>
+            <div class="speed-pill" data-ms="300">Fast</div>
+            <div class="speed-pill" data-ms="80">Max</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar: move list -->
+      <aside class="game-sidebar">
+        <div class="sidebar-card">
+          <h3>Moves</h3>
+          <div class="move-list" id="replay-move-list"></div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</main>
+
+<script src="/js/board.js"></script>
+<script src="/js/replay.js"></script>
+</body>
+</html>

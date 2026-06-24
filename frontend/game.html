@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess — Game</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header>
+  <span class="logo">♟ <span>Chess</span></span>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" id="btn-home">← Lobby</button>
+  </div>
+</header>
+
+<main id="game-page">
+  <div class="game-layout">
+
+    <!-- ── Board area ────────────────────────────────────────────────────── -->
+    <div class="board-wrap">
+      <!-- Top player (opponent) -->
+      <div class="board-meta">
+        <div class="player-info">
+          <div class="player-color-dot black" id="top-color-dot"></div>
+          <span class="player-name" id="top-player-name">Opponent</span>
+        </div>
+        <div class="captured-row" id="top-captured"></div>
+      </div>
+
+      <!-- Board -->
+      <div class="board-container">
+        <div id="board"></div>
+      </div>
+
+      <!-- Bottom player (you) -->
+      <div class="board-meta">
+        <div class="player-info">
+          <div class="player-color-dot white" id="bot-color-dot"></div>
+          <span class="player-name" id="bot-player-name">You</span>
+        </div>
+        <div class="captured-row" id="bot-captured"></div>
+      </div>
+    </div>
+
+    <!-- ── Sidebar ───────────────────────────────────────────────────────── -->
+    <aside class="game-sidebar">
+
+      <!-- Turn / Status -->
+      <div class="sidebar-card">
+        <h3>Status</h3>
+        <div class="turn-indicator">
+          <span class="turn-piece" id="turn-piece">♙</span>
+          <span id="turn-label">White's turn</span>
+        </div>
+        <div id="status-text"></div>
+      </div>
+
+      <!-- Move history -->
+      <div class="sidebar-card">
+        <h3>Moves</h3>
+        <div class="move-list" id="move-list"></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="sidebar-card">
+        <h3>Controls</h3>
+        <div class="game-controls" id="human-controls">
+          <button class="btn btn-secondary btn-sm" id="btn-flip">⟳ Flip</button>
+          <button class="btn btn-ghost btn-sm" id="btn-offer-draw">½ Draw</button>
+          <button class="btn btn-danger btn-sm" id="btn-resign">⚑ Resign</button>
+        </div>
+        <div class="game-controls hidden" id="bvb-controls">
+          <button class="btn btn-secondary btn-sm" id="btn-bvb-pause">⏸ Pause</button>
+          <button class="btn btn-secondary btn-sm" id="btn-flip">⟳ Flip</button>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</main>
+
+<!-- ── Promotion Modal ───────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="promotion-modal">
+  <div class="modal" style="max-width:340px">
+    <h2>Promote Pawn</h2>
+    <div class="pieces-row" id="promo-pieces-row"></div>
+  </div>
+</div>
+
+<!-- ── Draw Offer Modal ──────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="draw-offer-modal">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <h2>Draw Offered</h2>
+    <p style="margin:12px 0;color:var(--text-dim)">
+      <strong id="draw-offerer"></strong> offers a draw.
+    </p>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn btn-secondary" id="btn-decline-draw">Decline</button>
+      <button class="btn btn-primary" id="btn-accept-draw">Accept</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Game Over Modal ───────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="gameover-modal">
+  <div class="modal" id="gameover-modal-inner" style="max-width:380px">
+    <div class="result-icon" id="gameover-icon">🏁</div>
+    <div class="result-msg" id="gameover-msg"></div>
+    <div class="result-sub" id="gameover-sub"></div>
+    <!-- shown only for logged-in users after auto-save -->
+    <div class="result-save hidden" id="result-save">
+      <span class="result-save-label">Auto-saved to your match history</span>
+      <div class="result-save-actions">
+        <button class="btn btn-sm btn-ghost" id="btn-pin-match">Pin permanently</button>
+        <a class="btn btn-sm btn-secondary" href="/matches.html">My Matches</a>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;margin-top:20px">
+      <button class="btn btn-secondary" id="btn-gameover-home">Home</button>
+      <button class="btn btn-primary" id="btn-play-again">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/board.js"></script>
+<script src="/js/game.js"></script>
+</body>
+</html>
