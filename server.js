@@ -1,4 +1,13 @@
 require('dotenv').config();
+
+// Fail fast with a clear message if critical env vars are missing
+const REQUIRED_ENV = ['MONGODB_URI', 'SESSION_SECRET'];
+const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missing.length) {
+  console.error('Missing required environment variables:', missing.join(', '));
+  process.exit(1);
+}
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
