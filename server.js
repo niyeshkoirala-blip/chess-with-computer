@@ -1,6 +1,13 @@
-require('dotenv').config();
+// Load .env only in development — on Railway/production, vars come from the platform
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
-// Fail fast with a clear message if critical env vars are missing
+// Debug: log which critical vars are present (remove after confirming deploy works)
+console.log('[env] MONGODB_URI present:', !!process.env.MONGODB_URI);
+console.log('[env] SESSION_SECRET present:', !!process.env.SESSION_SECRET);
+console.log('[env] NODE_ENV:', process.env.NODE_ENV);
+
 const REQUIRED_ENV = ['MONGODB_URI', 'SESSION_SECRET'];
 const missing = REQUIRED_ENV.filter(k => !process.env[k]);
 if (missing.length) {
