@@ -43,16 +43,23 @@
     updateAuthUI();
   });
 
-  document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const target = tab.dataset.tab;
-      document.querySelectorAll('.auth-form').forEach(f => {
-        f.classList.toggle('hidden', f.id !== target);
-      });
-    });
-  });
+  // ── Auth mode switching (split-panel) ────────────────────────────────────
+  function switchAuthMode(mode) {
+    const split = $('auth-split');
+    if (!split) return;
+    split.dataset.mode = mode;
+    // Reset OTP state when leaving signup
+    if (mode === 'login') resetOtpStep();
+  }
+
+  function resetOtpStep() {
+    $('otp-step')?.classList.add('hidden');
+    $('register-form')?.classList.remove('hidden');
+    if ($('otp-error')) $('otp-error').textContent = '';
+  }
+
+  $('btn-go-signup')?.addEventListener('click', () => switchAuthMode('signup'));
+  $('btn-go-login')?.addEventListener('click',  () => switchAuthMode('login'));
 
   // ── Password strength meter ──────────────────────────────────────────────────
   $('reg-password')?.addEventListener('input', () => {
@@ -238,9 +245,9 @@
 
   function resetOtpFlow() {
     _pendingEmail = null;
-    $('otp-step')?.classList.add('hidden');
-    $('register-form')?.classList.remove('hidden');
-    $('otp-error') && ($('otp-error').textContent = '');
+    resetOtpStep();
+    // Return to login mode
+    switchAuthMode('login');
   }
 
   // ── Color picker ─────────────────────────────────────────────────────────────

@@ -460,27 +460,287 @@ hr, .divider {
 }
 .game-code-box p { font-size: 0.78rem; color: #6B5E4E; margin-top: 6px; }
 
-/* Auth tabs */
-.auth-tabs {
+/* ─── AUTH SPLIT PANEL ───────────────────────────────────────────────────── */
+
+/* Override modal constraints for the split layout */
+#auth-modal {
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-split {
+  position: relative;
   display: flex;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--ivory-muted);
+  width: 100%;
+  max-width: 800px;
+  min-height: 520px;
+  background: var(--ivory);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--modal-shadow);
 }
-.auth-tab {
-  padding: 8px 16px;
-  background: none;
-  border: none;
-  color: #6B5E4E;
+
+/* Static form panels — each 50% wide */
+.auth-panel {
+  flex: 0 0 50%;
+  width: 50%;
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  max-height: 90vh;
+  color: var(--walnut-deep);
+}
+
+.auth-panel-inner { width: 100%; }
+
+.auth-heading {
+  font-size: 1.5rem;
+  color: var(--walnut-deep);
+  margin-bottom: 22px;
+}
+
+/* Disable interaction on the panel hidden behind the slide panel */
+.auth-panel--signup { pointer-events: none; }
+.auth-panel--login  { pointer-events: auto; }
+
+.auth-split[data-mode="signup"] .auth-panel--signup { pointer-events: auto; }
+.auth-split[data-mode="signup"] .auth-panel--login  { pointer-events: none; }
+
+/* Required field asterisk */
+.req { color: #8B4A2A; }
+
+/* Full-width action button inside auth panels */
+.btn-auth-full { width: 100%; justify-content: center; }
+
+/* ─── SLIDING DECORATIVE PANEL ───────────────────────────────────────────── */
+.auth-slide-panel {
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%; height: 100%;
+  z-index: 10;
+  background-color: var(--walnut-deep);
+  background-image:
+    repeating-conic-gradient(
+      rgba(240,217,181,0.06) 0% 25%,
+      rgba(181,136,99,0.06) 0% 50%
+    );
+  background-size: 28px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  will-change: transform;
+  /* Smooth slide animation */
+  transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* Decorative large chess pieces in corners */
+.auth-slide-panel::before {
+  content: '♜';
+  position: absolute;
+  top: -14px; right: -10px;
+  font-size: 7rem;
+  opacity: 0.05;
+  color: var(--ivory);
+  pointer-events: none;
+  line-height: 1;
+}
+.auth-slide-panel::after {
+  content: '♞';
+  position: absolute;
+  bottom: -14px; left: -10px;
+  font-size: 7rem;
+  opacity: 0.05;
+  color: var(--ivory);
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* Signup mode: slide panel moves right (reveals signup form on left) */
+.auth-split[data-mode="signup"] .auth-slide-panel {
+  transform: translateX(100%);
+}
+
+/* ─── SLIDE PANEL CONTENT ────────────────────────────────────────────────── */
+.slide-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 32px;
+  text-align: center;
+  color: var(--ivory);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  pointer-events: none;
+}
+
+/* Login mode: show the "new here?" message */
+.auth-split[data-mode="login"] .slide-login-msg {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.32s;
+  pointer-events: auto;
+}
+
+/* Signup mode: show the "welcome back" message */
+.auth-split[data-mode="signup"] .slide-signup-msg {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.32s;
+  pointer-events: auto;
+}
+
+/* Big chess piece with floating animation */
+.slide-piece {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 20px;
+  animation: auth-float 4s ease-in-out infinite;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.45));
+}
+
+@keyframes auth-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  35%       { transform: translateY(-8px) rotate(-3deg); }
+  65%       { transform: translateY(-5px) rotate(3deg); }
+}
+
+/* Wrapper div for text + button in slide panel */
+.slide-content-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.slide-content h2 {
+  font-size: 1.75rem;
+  color: var(--ivory);
+  margin-bottom: 12px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.slide-content p {
+  font-size: 0.88rem;
+  color: rgba(246,240,230,0.70);
+  line-height: 1.75;
+  margin-bottom: 28px;
+  max-width: 220px;
+  text-align: center;
+}
+
+/* Amber outline pill CTA button inside slide panel */
+.btn-slide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 32px;
+  border-radius: 40px;
+  border: 1.5px solid var(--amber);
+  background: transparent;
+  color: var(--amber);
   font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: all var(--t);
+  font-weight: 600;
   font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.22s ease, color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
 }
-.auth-tab:hover { color: var(--walnut-deep); }
-.auth-tab.active { color: var(--green-dark); border-bottom-color: var(--green); font-weight: 600; }
+.btn-slide:hover {
+  background: var(--amber);
+  color: var(--walnut-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 18px rgba(181,136,99,0.45);
+}
+.btn-slide:active { transform: translateY(0); box-shadow: none; }
+
+/* Universal close button (glass-morphism, works on both light + dark panels) */
+.auth-close-btn {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 20;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.80);
+  font-size: 0.82rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  line-height: 1;
+}
+.auth-close-btn:hover {
+  background: rgba(255,255,255,0.26);
+  color: #fff;
+}
+
+/* ─── AUTH RESPONSIVE (stacked on mobile) ────────────────────────────────── */
+@media (max-width: 660px) {
+  .auth-split {
+    flex-direction: column;
+    max-width: 100%;
+    min-height: unset;
+    border-radius: 10px;
+  }
+
+  .auth-panel {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: none;
+    padding: 28px 22px;
+    pointer-events: auto !important;
+  }
+
+  /* Hide the inactive form entirely on mobile */
+  .auth-split[data-mode="login"]  .auth-panel--signup { display: none; }
+  .auth-split[data-mode="signup"] .auth-panel--login  { display: none; }
+
+  /* Slide panel becomes a fixed-height banner at top */
+  .auth-slide-panel {
+    position: static;
+    width: 100%;
+    height: 170px;
+    transform: none !important;
+    transition: none;
+    flex-shrink: 0;
+  }
+
+  .slide-content {
+    flex-direction: row;
+    gap: 14px;
+    text-align: left;
+    padding: 20px 22px;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* On mobile only show the relevant content */
+  .auth-split[data-mode="login"]  .slide-signup-msg { display: none; }
+  .auth-split[data-mode="signup"] .slide-login-msg  { display: none; }
+
+  .slide-piece {
+    font-size: 2.6rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    animation: none;
+  }
+
+  .slide-content-text { flex: 1; align-items: flex-start; }
+  .slide-content h2 { font-size: 1.1rem; margin-bottom: 6px; text-align: left; }
+  .slide-content p  { font-size: 0.8rem; margin-bottom: 12px; max-width: none; text-align: left; }
+
+  .auth-close-btn { top: 10px; right: 10px; }
+}
 
 /* ─── GAME PAGE ──────────────────────────────────────────────────────────── */
 #game-page {

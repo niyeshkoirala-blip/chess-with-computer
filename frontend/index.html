@@ -13,7 +13,7 @@
   <div class="header-actions">
     <span class="user-badge" id="user-badge"></span>
     <a class="btn btn-ghost btn-sm hidden" id="btn-matches" href="/matches.html">My Matches</a>
-    <button class="btn btn-ghost btn-sm" id="btn-login">Sign in</button>
+    <button class="btn btn-ghost btn-sm" id="btn-login">Login / Sign up</button>
     <button class="btn btn-ghost btn-sm hidden" id="btn-logout">Sign out</button>
   </div>
 </header>
@@ -54,92 +54,121 @@
   </div>
 </main>
 
-<!-- ── Auth Modal ──────────────────────────────────────────────────────── -->
+<!-- ── Auth Modal — Split Panel ─────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="auth-modal">
-  <div class="modal">
-    <button class="modal-close">✕</button>
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-tab="login-form">Sign in</button>
-      <button class="auth-tab" data-tab="register-form">Register</button>
+  <div class="auth-split" id="auth-split" data-mode="login">
+
+    <!-- Universal close button (always top-right, above everything) -->
+    <button class="auth-close-btn modal-close" aria-label="Close">✕</button>
+
+    <!-- LEFT PANEL: Signup form (visible in signup mode) -->
+    <div class="auth-panel auth-panel--signup">
+      <div class="auth-panel-inner">
+        <h2 class="auth-heading">Create Account</h2>
+
+        <!-- Step 1: registration details -->
+        <form id="register-form">
+          <div class="form-group">
+            <label>Username <span class="req">*</span></label>
+            <input id="reg-username" type="text" autocomplete="username" placeholder="e.g. chess_king" required minlength="3" maxlength="20" />
+            <p class="form-hint">3–20 chars · letters, numbers, underscores</p>
+          </div>
+          <div class="form-group">
+            <label>Display Name</label>
+            <input id="reg-displayname" type="text" autocomplete="nickname" placeholder="Shown in games (optional)" maxlength="30" />
+          </div>
+          <div class="form-group">
+            <label>Email <span class="req">*</span></label>
+            <input id="reg-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+            <p class="form-hint">A verification code will be sent here</p>
+          </div>
+          <div class="form-group">
+            <label>Password <span class="req">*</span></label>
+            <input id="reg-password" type="password" autocomplete="new-password" placeholder="Min 8 chars" required />
+          </div>
+          <div class="form-group">
+            <label>Confirm Password <span class="req">*</span></label>
+            <input id="reg-confirm" type="password" autocomplete="new-password" placeholder="Repeat password" required />
+          </div>
+          <div class="password-strength" id="reg-strength">
+            <div class="strength-bar"><div class="strength-fill" id="reg-strength-fill"></div></div>
+            <span class="strength-label" id="reg-strength-label"></span>
+          </div>
+          <p class="form-hint" style="margin-top:4px">Must contain uppercase letter and number</p>
+          <p class="form-error" id="reg-error"></p>
+          <div class="modal-actions" style="margin-top:18px">
+            <button type="submit" class="btn btn-primary btn-auth-full" id="reg-submit-btn">Send Verification Code</button>
+          </div>
+        </form>
+
+        <!-- Step 2: OTP verification -->
+        <div id="otp-step" class="hidden">
+          <div class="otp-sent-notice">
+            <div class="otp-icon">📬</div>
+            <p class="otp-sent-text">We sent a 6-digit code to<br><strong id="otp-email-hint"></strong></p>
+            <p class="otp-sent-sub">Check your inbox (and spam). Expires in <strong>10 minutes</strong>.</p>
+          </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>Verification Code <span class="req">*</span></label>
+            <input id="otp-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+              placeholder="6-digit code" autocomplete="one-time-code"
+              style="text-align:center;letter-spacing:10px;font-size:1.3rem;font-family:monospace" />
+          </div>
+          <p class="form-error" id="otp-error"></p>
+          <div class="modal-actions">
+            <button class="btn btn-ghost btn-sm" id="otp-resend-btn" type="button">Resend code</button>
+            <button class="btn btn-primary" id="otp-verify-btn" type="button">Verify &amp; Create Account</button>
+          </div>
+          <p class="form-hint" style="margin-top:10px;text-align:center">
+            <button class="link-btn" id="otp-back-btn" type="button">← Back to registration form</button>
+          </p>
+        </div>
+      </div>
     </div>
 
-    <form id="login-form" class="auth-form">
-      <div class="form-group">
-        <label>Username</label>
-        <input id="login-username" type="text" autocomplete="username" required />
+    <!-- RIGHT PANEL: Login form (visible in login mode) -->
+    <div class="auth-panel auth-panel--login">
+      <div class="auth-panel-inner">
+        <h2 class="auth-heading">Sign In</h2>
+        <form id="login-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input id="login-username" type="text" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input id="login-password" type="password" autocomplete="current-password" required />
+          </div>
+          <p class="form-error" id="login-error"></p>
+          <div class="modal-actions" style="margin-top:20px">
+            <button type="submit" class="btn btn-primary btn-auth-full">Sign In</button>
+          </div>
+        </form>
       </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" required />
-      </div>
-      <p class="form-error" id="login-error"></p>
-      <div class="modal-actions">
-        <button type="submit" class="btn btn-primary">Sign in</button>
-      </div>
-    </form>
-
-    <!-- Step 1: details form -->
-    <form id="register-form" class="auth-form hidden">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Username <span style="color:#8B4A2A">*</span></label>
-          <input id="reg-username" type="text" autocomplete="username" placeholder="e.g. chess_king" required minlength="3" maxlength="20" />
-          <p class="form-hint">3–20 chars · letters, numbers, underscores</p>
-        </div>
-        <div class="form-group">
-          <label>Display Name</label>
-          <input id="reg-displayname" type="text" autocomplete="nickname" placeholder="Shown in games" maxlength="30" />
-          <p class="form-hint">Optional — defaults to username</p>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Email <span style="color:#8B4A2A">*</span></label>
-        <input id="reg-email" type="email" autocomplete="email" placeholder="you@example.com" required />
-        <p class="form-hint">A verification code will be sent here</p>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Password <span style="color:#8B4A2A">*</span></label>
-          <input id="reg-password" type="password" autocomplete="new-password" placeholder="Min 8 chars" required />
-        </div>
-        <div class="form-group">
-          <label>Confirm Password <span style="color:#8B4A2A">*</span></label>
-          <input id="reg-confirm" type="password" autocomplete="new-password" placeholder="Repeat password" required />
-        </div>
-      </div>
-      <div class="password-strength" id="reg-strength">
-        <div class="strength-bar"><div class="strength-fill" id="reg-strength-fill"></div></div>
-        <span class="strength-label" id="reg-strength-label"></span>
-      </div>
-      <p class="form-hint" style="margin-top:4px">Must contain uppercase letter and number</p>
-      <p class="form-error" id="reg-error"></p>
-      <div class="modal-actions">
-        <button type="submit" class="btn btn-primary" id="reg-submit-btn">Send Verification Code</button>
-      </div>
-    </form>
-
-    <!-- Step 2: OTP verification (hidden until code is sent) -->
-    <div id="otp-step" class="hidden">
-      <div class="otp-sent-notice">
-        <div class="otp-icon">📬</div>
-        <p class="otp-sent-text">We sent a 6-digit code to<br><strong id="otp-email-hint"></strong></p>
-        <p class="otp-sent-sub">Check your inbox (and spam folder). It expires in <strong id="otp-expires-label">10 minutes</strong>.</p>
-      </div>
-      <div class="form-group" style="margin-top:20px">
-        <label>Verification Code <span style="color:#8B4A2A">*</span></label>
-        <input id="otp-input" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
-          placeholder="6-digit code" autocomplete="one-time-code"
-          style="text-align:center;letter-spacing:10px;font-size:1.3rem;font-family:monospace" />
-      </div>
-      <p class="form-error" id="otp-error"></p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost btn-sm" id="otp-resend-btn" type="button">Resend code</button>
-        <button class="btn btn-primary" id="otp-verify-btn" type="button">Verify &amp; Create Account</button>
-      </div>
-      <p class="form-hint" style="margin-top:12px;text-align:center">
-        <button class="link-btn" id="otp-back-btn" type="button">← Back to registration form</button>
-      </p>
     </div>
+
+    <!-- Sliding decorative panel (starts LEFT, slides RIGHT on signup mode) -->
+    <div class="auth-slide-panel">
+      <!-- Login mode: left side, invites user to sign up -->
+      <div class="slide-content slide-login-msg">
+        <span class="slide-piece">♟</span>
+        <div class="slide-content-text">
+          <h2>New here?</h2>
+          <p>Let's get you set up — create a free account and start playing.</p>
+          <button class="btn-slide" id="btn-go-signup">Sign Up</button>
+        </div>
+      </div>
+      <!-- Signup mode: right side, invites user to log in -->
+      <div class="slide-content slide-signup-msg">
+        <span class="slide-piece">♙</span>
+        <div class="slide-content-text">
+          <h2>Hey, welcome back.</h2>
+          <p>Good to see you again — sign in to continue your games.</p>
+          <button class="btn-slide" id="btn-go-login">Log In</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
