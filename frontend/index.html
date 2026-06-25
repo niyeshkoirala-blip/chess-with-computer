@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chess — Play Online</title>
+  <title>GAMBIT — Play Chess Online</title>
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <header>
-  <span class="logo">♟ <span>Chess</span></span>
+  <a class="logo" href="/">
+    <span class="logo-piece">♟</span>
+    <span>GAMBIT</span>
+  </a>
   <div class="header-actions">
     <span class="user-badge" id="user-badge"></span>
     <a class="btn btn-ghost btn-sm hidden" id="btn-matches" href="/matches.html">My Matches</a>
@@ -19,54 +22,133 @@
 </header>
 
 <main id="lobby-page">
-  <div class="lobby-title">
-    <h1>Play Chess</h1>
-    <p>Choose a game mode to start playing</p>
-  </div>
 
-  <div class="mode-grid">
-    <div class="mode-card" id="mode-hvh-online">
-      <div class="icon">🌐</div>
-      <h3>Human vs Human</h3>
-      <p>Play online against a friend. Share a code to connect.</p>
-    </div>
-    <div class="mode-card" id="mode-hvh-local">
-      <div class="icon">🪑</div>
-      <h3>Local 2-Player</h3>
-      <p>Pass &amp; play on the same device. No account needed.</p>
-    </div>
-    <div class="mode-card" id="mode-hvb">
-      <div class="icon">🤖</div>
-      <h3>Play vs Computer</h3>
-      <p>Test your skills against Stockfish at any difficulty.</p>
-    </div>
-    <div class="mode-card" id="mode-bvb">
-      <div class="icon">⚡</div>
-      <h3>Engine vs Engine</h3>
-      <p>Watch two Stockfish instances battle it out.</p>
-    </div>
-  </div>
+  <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
+  <section class="lobby-hero">
 
-  <div class="lobby-open-games">
-    <h2>Open Games</h2>
-    <div class="open-game-list" id="open-game-list"></div>
-    <p id="no-open-games">No open games. Create one above!</p>
-  </div>
+    <!-- Left: heading + CTAs -->
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="hero-dot"></span>
+        <span>Ready to play</span>
+      </div>
+      <h1 class="hero-title">A quieter place<br>to play <em>chess</em>.</h1>
+      <p class="hero-sub">Pick a mode, challenge a friend, or jump into a quick match — your next game starts now.</p>
+      <div class="hero-ctas">
+        <button class="btn-quickmatch" id="mode-quickmatch">
+          <span class="qm-piece">♟</span>
+          Quick Match
+          <span class="cta-arrow">→</span>
+        </button>
+        <button class="btn-friend" id="btn-play-friend">Play a Friend</button>
+      </div>
+    </div>
+
+    <!-- Right: decorative board preview -->
+    <div class="hero-right">
+      <div class="lobby-board-card">
+        <div class="lobby-board-grid">
+          <!-- Row 0: black back rank -->
+          <div class="lbc sq-l bp">♜</div><div class="lbc sq-d bp">♞</div><div class="lbc sq-l bp">♝</div><div class="lbc sq-d bp">♛</div><div class="lbc sq-l bp">♚</div><div class="lbc sq-d bp">♝</div><div class="lbc sq-l bp">♞</div><div class="lbc sq-d bp">♜</div>
+          <!-- Row 1: black pawns -->
+          <div class="lbc sq-d bp">♟</div><div class="lbc sq-l bp">♟</div><div class="lbc sq-d bp">♟</div><div class="lbc sq-l bp">♟</div><div class="lbc sq-d bp">♟</div><div class="lbc sq-l bp">♟</div><div class="lbc sq-d bp">♟</div><div class="lbc sq-l bp">♟</div>
+          <!-- Row 2: empty -->
+          <div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div>
+          <!-- Row 3: empty -->
+          <div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div>
+          <!-- Row 4: empty -->
+          <div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div>
+          <!-- Row 5: empty -->
+          <div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div><div class="lbc sq-d"></div><div class="lbc sq-l"></div>
+          <!-- Row 6: white pawns -->
+          <div class="lbc sq-l wp">♙</div><div class="lbc sq-d wp">♙</div><div class="lbc sq-l wp">♙</div><div class="lbc sq-d wp">♙</div><div class="lbc sq-l wp">♙</div><div class="lbc sq-d wp">♙</div><div class="lbc sq-l wp">♙</div><div class="lbc sq-d wp">♙</div>
+          <!-- Row 7: white back rank -->
+          <div class="lbc sq-d wp">♖</div><div class="lbc sq-l wp">♘</div><div class="lbc sq-d wp">♗</div><div class="lbc sq-l wp">♕</div><div class="lbc sq-d wp">♔</div><div class="lbc sq-l wp">♗</div><div class="lbc sq-d wp">♘</div><div class="lbc sq-l wp">♖</div>
+        </div>
+      </div>
+      <div class="board-opening-label">
+        <span class="opening-tag">Opening</span>
+        <span class="opening-rule"></span>
+        <em class="opening-name">Starting Position</em>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── Ways to play ──────────────────────────────────────────────────────── -->
+  <section class="ways-to-play">
+    <div class="section-label-row">
+      <span class="section-label">Ways to play</span>
+      <span class="section-rule"></span>
+    </div>
+    <div class="mode-grid">
+
+      <div class="mode-card" id="mode-hvh-online">
+        <div class="icon">🌐</div>
+        <div>
+          <h3>Play a Friend</h3>
+          <p>Play online against a friend. Share a code to connect.</p>
+        </div>
+        <div class="card-cta">Create game <span>→</span></div>
+      </div>
+
+      <div class="mode-card" id="mode-hvh-local">
+        <div class="icon">🪑</div>
+        <div>
+          <h3>Local 2-Player</h3>
+          <p>Pass &amp; play on the same device. No account needed.</p>
+        </div>
+        <div class="card-cta">Play now <span>→</span></div>
+      </div>
+
+      <div class="mode-card" id="mode-hvb">
+        <div class="icon">🤖</div>
+        <div>
+          <h3>vs Computer</h3>
+          <p>Test your skills against Stockfish at any difficulty.</p>
+        </div>
+        <div class="card-cta">Choose level <span>→</span></div>
+      </div>
+
+      <div class="mode-card" id="mode-bvb">
+        <div class="icon">⚡</div>
+        <div>
+          <h3>Engine Battle</h3>
+          <p>Watch two Stockfish instances battle it out.</p>
+        </div>
+        <div class="card-cta">Watch match <span>→</span></div>
+      </div>
+
+    </div>
+  </section>
+
 </main>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="footer-piece">♟</span>
+      <span class="footer-name">GAMBIT</span>
+    </div>
+    <nav class="footer-links">
+      <a href="/">Lobby</a>
+      <a href="/matches.html">Matches</a>
+    </nav>
+  </div>
+</footer>
 
 <!-- ── Auth Modal — Split Panel ─────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="auth-modal">
   <div class="auth-split" id="auth-split" data-mode="login">
 
-    <!-- Universal close button (always top-right, above everything) -->
     <button class="auth-close-btn modal-close" aria-label="Close">✕</button>
 
-    <!-- LEFT PANEL: Signup form (visible in signup mode) -->
+    <!-- LEFT: Signup form -->
     <div class="auth-panel auth-panel--signup">
       <div class="auth-panel-inner">
         <h2 class="auth-heading">Create Account</h2>
 
-        <!-- Step 1: registration details -->
         <form id="register-form">
           <div class="form-group">
             <label>Username <span class="req">*</span></label>
@@ -101,7 +183,6 @@
           </div>
         </form>
 
-        <!-- Step 2: OTP verification -->
         <div id="otp-step" class="hidden">
           <div class="otp-sent-notice">
             <div class="otp-icon">📬</div>
@@ -126,7 +207,7 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL: Login form (visible in login mode) -->
+    <!-- RIGHT: Login form -->
     <div class="auth-panel auth-panel--login">
       <div class="auth-panel-inner">
         <h2 class="auth-heading">Sign In</h2>
@@ -147,9 +228,8 @@
       </div>
     </div>
 
-    <!-- Sliding decorative panel (starts LEFT, slides RIGHT on signup mode) -->
+    <!-- Sliding decorative panel -->
     <div class="auth-slide-panel">
-      <!-- Login mode: left side, invites user to sign up -->
       <div class="slide-content slide-login-msg">
         <span class="slide-piece">♟</span>
         <div class="slide-content-text">
@@ -158,7 +238,6 @@
           <button class="btn-slide" id="btn-go-signup">Sign Up</button>
         </div>
       </div>
-      <!-- Signup mode: right side, invites user to log in -->
       <div class="slide-content slide-signup-msg">
         <span class="slide-piece">♙</span>
         <div class="slide-content-text">
@@ -172,11 +251,27 @@
   </div>
 </div>
 
-<!-- ── HvH Create Modal ────────────────────────────────────────────────── -->
+<!-- ── Quick Match Modal ──────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="matchmake-modal">
+  <div class="modal" style="text-align:center; max-width:360px">
+    <h2 id="mm-title">Finding Opponent…</h2>
+    <div class="mm-search-wrap">
+      <div class="mm-ring"></div>
+      <span class="mm-piece" id="mm-piece">♟</span>
+    </div>
+    <p class="mm-status" id="mm-status">Searching for a player…</p>
+    <p class="mm-timer" id="mm-timer">0:00</p>
+    <div class="modal-actions" style="justify-content:center; margin-top:20px">
+      <button class="btn btn-secondary" id="btn-cancel-queue">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HvH Create Modal ───────────────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="hvh-modal">
   <div class="modal">
     <button class="modal-close">✕</button>
-    <h2>Human vs Human — Online</h2>
+    <h2>Play a Friend — Online</h2>
     <div class="form-group name-guest-field">
       <label>Your name</label>
       <input id="hvh-player-name" type="text" placeholder="Your name" maxlength="20" />
@@ -202,7 +297,7 @@
   </div>
 </div>
 
-<!-- ── Waiting Modal ──────────────────────────────────────────────────── -->
+<!-- ── Waiting Modal ─────────────────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="waiting-modal">
   <div class="modal" style="text-align:center">
     <h2>Waiting for opponent…</h2>
@@ -217,7 +312,7 @@
   </div>
 </div>
 
-<!-- ── Join Modal ─────────────────────────────────────────────────────── -->
+<!-- ── Join Modal ────────────────────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="join-modal">
   <div class="modal">
     <button class="modal-close">✕</button>
@@ -241,7 +336,7 @@
   </div>
 </div>
 
-<!-- ── HvB Modal ──────────────────────────────────────────────────────── -->
+<!-- ── HvB Modal ─────────────────────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="hvb-modal">
   <div class="modal">
     <button class="modal-close">✕</button>
@@ -249,15 +344,9 @@
     <div class="form-group">
       <label>Play as</label>
       <div class="color-picker" id="hvb-color-picker">
-        <div class="color-opt selected" data-value="white">
-          <span class="piece-preview">♙</span> White
-        </div>
-        <div class="color-opt" data-value="black">
-          <span class="piece-preview">♟</span> Black
-        </div>
-        <div class="color-opt" data-value="random">
-          🎲 Random
-        </div>
+        <div class="color-opt selected" data-value="white"><span class="piece-preview">♙</span> White</div>
+        <div class="color-opt" data-value="black"><span class="piece-preview">♟</span> Black</div>
+        <div class="color-opt" data-value="random">🎲 Random</div>
       </div>
     </div>
     <div class="form-group">
@@ -276,7 +365,7 @@
   </div>
 </div>
 
-<!-- ── BvB Modal ──────────────────────────────────────────────────────── -->
+<!-- ── BvB Modal ─────────────────────────────────────────────────────────── -->
 <div class="modal-overlay hidden" id="bvb-modal">
   <div class="modal">
     <button class="modal-close">✕</button>

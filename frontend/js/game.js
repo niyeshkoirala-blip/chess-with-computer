@@ -71,6 +71,7 @@
 
     const myTurn = isLocal ? true : data.turn === myColor;
     board.setInteractive(!isBvB && myTurn);
+    updateTurnGlow(!isBvB && myTurn, data.turn);
 
     // Single render call
     board.render(data.boardstate, data.turn);
@@ -145,7 +146,9 @@
     board.highlight(null, null);    // clears lastMove safely
     board.clearCheck();
     board.setMyColor(isLocal ? (localTurn || 'white') : myColor);
-    board.setInteractive(!isBvB && gs.turn === (isLocal ? 'white' : myColor));
+    const initMyTurn = !isBvB && gs.turn === (isLocal ? 'white' : myColor);
+    board.setInteractive(initMyTurn);
+    updateTurnGlow(initMyTurn, gs.turn);
 
     // Single render
     board.render(gs.boardstate, gs.turn);
@@ -197,6 +200,20 @@
     else if (state === 'checkmate') st.textContent = 'Checkmate!';
     else if (state === 'stalemate') st.textContent = 'Stalemate!';
     else st.textContent = '';
+  }
+
+  /* Highlight the board + player dot when it's the active turn */
+  function updateTurnGlow(isMyTurn, activeTurnColor) {
+    const bc = boardEl.closest('.board-container');
+    if (bc) bc.classList.toggle('your-turn', isMyTurn);
+
+    // Pulse the dot of whichever player's turn it is
+    const topColor = myColor === 'white' ? 'black' : 'white';
+    const topDot   = $('top-color-dot');
+    const botDot   = $('bot-color-dot');
+    const topActive = activeTurnColor === topColor;
+    topDot?.classList.toggle('active-turn', topActive);
+    botDot?.classList.toggle('active-turn', !topActive);
   }
 
   function updatePlayerNames(gs) {

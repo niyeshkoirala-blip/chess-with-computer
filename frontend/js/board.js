@@ -200,9 +200,24 @@ class ChessBoard {
   }
 
   flip() {
-    this.flipped = !this.flipped;
-    this._refreshCoords();
-    if (this.boardstate) this.render(this.boardstate, this.turn);
+    const el = this.container;
+    el.classList.remove('flip-out', 'flip-in');
+
+    // Phase 1 — fold board away (0° → 90°, edge-on at 90° = invisible)
+    el.classList.add('flip-out');
+
+    const HALF = 220; // ms — must match CSS animation duration
+    setTimeout(() => {
+      // Swap state while the board is edge-on (invisible)
+      this.flipped = !this.flipped;
+      this._refreshCoords();
+      if (this.boardstate) this.render(this.boardstate, this.turn);
+
+      // Phase 2 — unfold from the other side (-90° → 0°)
+      el.classList.remove('flip-out');
+      el.classList.add('flip-in');
+      setTimeout(() => el.classList.remove('flip-in'), HALF);
+    }, HALF);
   }
 
   setFlipped(v) {

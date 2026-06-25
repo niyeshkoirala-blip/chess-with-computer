@@ -310,6 +310,8 @@
 
   // ── HvH Online ───────────────────────────────────────────────────────────────
   $('mode-hvh-online')?.addEventListener('click', () => openModal('hvh-modal'));
+  // Hero "Play a Friend" button mirrors the mode card
+  $('btn-play-friend')?.addEventListener('click', () => openModal('hvh-modal'));
 
   $('btn-create-hvh')?.addEventListener('click', () => {
     const playerName = currentUser || $('hvh-player-name')?.value.trim() || 'Player 1';
@@ -371,33 +373,74 @@
     closeModal('bvb-modal');
   });
 
-  // ── Open games ───────────────────────────────────────────────────────────────
-  socket.on('lobby-state', (games) => {
-    const list = $('open-game-list');
-    const empty = $('no-open-games');
-    list.innerHTML = '';
-    if (!games.length) { empty.style.display = 'block'; return; }
-    empty.style.display = 'none';
-    games.forEach(g => {
-      const el = document.createElement('div');
-      el.className = 'open-game-item';
-      el.innerHTML = `
-        <div class="game-info">
-          <span>${escHtml(g.name)}'s game</span>
-          <small>Code: <strong>${escHtml(g.id)}</strong></small>
-        </div>
-        <button class="btn btn-sm btn-primary">Join</button>
-      `;
-      el.querySelector('button').addEventListener('click', () => {
-        $('join-code-input').value = g.id;
-        openModal('join-modal');
-      });
-      list.appendChild(el);
-    });
+  // ── Quick Matchmaking ────────────────────────────────────────────────────────
+  let mmTimerInterval = null;
+  let mmStartTime = null;
+
+  function startMmTimer() {
+    mmStartTime = Date.now();
+    const timerEl = $('mm-timer');
+    const pieceEl = $('mm-piece');
+    const pieces = ['♟', '♞', '♝', '♛', '♜'];
+    let pieceIdx = 0;
+
+    mmTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - mmStartTime) / 1000);
+      const mins = Math.floor(elapsed / 60);
+      const secs = String(elapsed % 60).padStart(2, '0');
+      if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+
+      // Cycle through pieces for a fun effect
+      pieceIdx = (pieceIdx + 1) % pieces.length;
+      if (pieceEl) pieceEl.textContent = pieces[pieceIdx];
+    }, 1000);
+  }
+
+  function stopMmTimer() {
+    clearInterval(mmTimerInterval);
+    mmTimerInterval = null;
+  }
+
+  function openMatchmakeModal() {
+    $('mm-title').textContent = 'Finding Opponent…';
+    $('mm-status').textContent = 'Searching for a player…';
+    $('mm-timer').textContent = '0:00';
+    $('mm-piece').textContent = '♟';
+    openModal('matchmake-modal');
+    startMmTimer();
+  }
+
+  // Open matchmake modal when Quick Match banner is clicked
+  $('mode-quickmatch')?.addEventListener('click', () => {
+    const playerName = currentUser || 'Player';
+    openMatchmakeModal();
+    socket.emit('queue-join', { playerName });
   });
 
-  socket.emit('get-lobby');
-  setInterval(() => socket.emit('get-lobby'), 10000);
+  $('btn-cancel-queue')?.addEventListener('click', () => {
+    socket.emit('queue-leave');
+    stopMmTimer();
+    closeModal('matchmake-modal');
+  });
+
+  // Server put us in queue — just waiting
+  socket.on('queue-waiting', () => {
+    if ($('mm-status')) $('mm-status').textContent = 'Waiting for another player…';
+  });
+
+  // Left queue successfully (cancel confirmed)
+  socket.on('queue-left', () => {
+    stopMmTimer();
+    closeModal('matchmake-modal');
+  });
+
+  // Match found — go straight to game
+  socket.on('match-found', ({ gameId, color, playerToken, gameState }) => {
+    stopMmTimer();
+    closeModal('matchmake-modal');
+    sessionStorage.setItem('chess-game', JSON.stringify({ gameId, color, mode: 'hvh', playerToken }));
+    window.location.href = '/game.html';
+  });
 
   // ── Toast ────────────────────────────────────────────────────────────────────
   function showToast(msg) {

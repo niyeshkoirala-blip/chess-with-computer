@@ -63,8 +63,9 @@ app.get('/{*splat}', (_req, res) => res.sendFile(path.join(__dirname, 'frontend'
 
 // ─── Game state ────────────────────────────────────────────────────────────────
 
-const games = new Map();       // gameId -> game
+const games = new Map();        // gameId -> game
 const socketToGame = new Map(); // socketId -> gameId
+const matchQueue = [];          // [{socketId, playerName, timestamp}] — FIFO matchmaking queue
 
 const INITIAL_BOARD = [
   ['♜','♞','♝','♛','♚','♝','♞','♜'],
@@ -464,6 +465,59 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── Quick matchmaking ──────────────────────────────────────────────────────
+  socket.on('queue-join', ({ playerName }) => {
+    // Prevent duplicate queue entries
+    if (matchQueue.find(q => q.socketId === socket.id)) return;
+
+    // Remove stale queue entries (sockets that have disconnected)
+    for (let i = matchQueue.length - 1; i >= 0; i--) {
+      if (!io.sockets.sockets.get(matchQueue[i].socketId)) matchQueue.splice(i, 1);
+    }
+
+    if (matchQueue.length > 0) {
+      // Match with the first player waiting in queue
+      const opponent = matchQueue.shift();
+
+      const game = createGame({ mode: 'hvh' });
+      game.players.white = opponent.socketId;
+      game.players.black = socket.id;
+      game.playerNames.white = opponent.playerName;
+      game.playerNames.black = playerName || 'Player';
+      game.playerTokens.white = genId() + genId();
+      game.playerTokens.black = genId() + genId();
+      game.status = 'playing';
+
+      games.set(game.id, game);
+      socketToGame.set(opponent.socketId, game.id);
+      socketToGame.set(socket.id, game.id);
+
+      const opponentSocket = io.sockets.sockets.get(opponent.socketId);
+      opponentSocket?.join(game.id);
+      socket.join(game.id);
+
+      opponentSocket?.emit('match-found', {
+        gameId: game.id, color: 'white',
+        playerToken: game.playerTokens.white,
+        gameState: publicGameState(game)
+      });
+      socket.emit('match-found', {
+        gameId: game.id, color: 'black',
+        playerToken: game.playerTokens.black,
+        gameState: publicGameState(game)
+      });
+    } else {
+      matchQueue.push({ socketId: socket.id, playerName: playerName || 'Player', timestamp: Date.now() });
+      socket.emit('queue-waiting');
+    }
+  });
+
+  socket.on('queue-leave', () => {
+    const idx = matchQueue.findIndex(q => q.socketId === socket.id);
+    if (idx !== -1) matchQueue.splice(idx, 1);
+    socket.emit('queue-left');
+  });
+
   socket.on('get-game-state', ({ gameId, playerToken }) => {
     const game = games.get(gameId);
     if (!game) return socket.emit('full-game-state', null);
@@ -485,6 +539,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    // Remove from matchmaking queue if waiting
+    const queueIdx = matchQueue.findIndex(q => q.socketId === socket.id);
+    if (queueIdx !== -1) matchQueue.splice(queueIdx, 1);
+
     const gameId = socketToGame.get(socket.id);
     socketToGame.delete(socket.id);
     if (!gameId) return;
@@ -496,7 +554,13 @@ io.on('connection', (socket) => {
       : game.players.black === socket.id ? 'black' : null;
     if (!dcColor) return;
 
-    io.to(game.id).emit('player-disconnected', { color: dcColor });
+    // Delay notification so page-navigation reconnects (new socket) don't falsely
+    // trigger "opponent disconnected" — if they rejoin within 3s, skip the toast.
+    setTimeout(() => {
+      const g = games.get(gameId);
+      if (!g || g.players[dcColor] !== socket.id) return; // already reconnected
+      io.to(g.id).emit('player-disconnected', { color: dcColor });
+    }, 3000);
 
     // Give 30s to reconnect before forfeiting
     setTimeout(() => {
