@@ -1,7 +1,8 @@
-const express    = require('express');
-const nodemailer = require('nodemailer');
-const router     = express.Router();
-const User       = require('../models/User');
+const express              = require('express');
+const nodemailer           = require('nodemailer');
+const router               = express.Router();
+const User                 = require('../models/User');
+const PendingRegistration  = require('../models/PendingRegistration');
 
 const USERNAME_RE = /^[a-zA-Z0-9_]+$/;
 const EMAIL_RE    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,17 +36,8 @@ async function sendOtpEmail(to, otp) {
   });
 }
 
-// ── Pending registrations store ───────────────────────────────────────────────
-// Keyed by email. Entries: { username, displayName, password, otp, expiresAt, attempts }
-const pending = new Map();
-
-// Clean up expired entries every 15 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of pending) {
-    if (entry.expiresAt < now) pending.delete(key);
-  }
-}, 15 * 60 * 1000);
+// Pending registrations are stored in MongoDB (PendingRegistration model) so
+// Railway restarts don't wipe OTPs between the send and verify steps.
 
 function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -91,29 +83,36 @@ router.post('/register/request', async (req, res) => {
     return res.status(500).json({ error: 'Server error. Please try again.' });
   }
 
-  // Rate-limit: if a pending entry exists and was just sent, don't spam
-  const existing = pending.get(normalEmail);
-  if (existing && existing.expiresAt - OTP_TTL_MS + 60_000 > Date.now()) {
+  // Rate-limit: if a pending entry was sent less than 60s ago, don't spam
+  const existing = await PendingRegistration.findOne({ email: normalEmail });
+  if (existing && existing.sentAt > new Date(Date.now() - 60_000)) {
     return res.status(429).json({ error: 'A code was already sent. Please wait a moment before requesting another.' });
   }
 
   const otp = generateOtp();
-  pending.set(normalEmail, {
-    username,
-    displayName: displayName?.trim() || username,
-    password,          // plain — held in memory for max OTP_TTL_MS
-    otp,
-    expiresAt: Date.now() + OTP_TTL_MS,
-    attempts: 0,
-  });
+  const now = new Date();
 
   try {
     await sendOtpEmail(normalEmail, otp);
   } catch (err) {
-    pending.delete(normalEmail);
     console.error('OTP email error:', err.message);
     return res.status(500).json({ error: 'Failed to send verification email. Check your email address and try again.' });
   }
+
+  // Upsert into DB — replaces any previous pending entry for this email
+  await PendingRegistration.findOneAndUpdate(
+    { email: normalEmail },
+    {
+      username,
+      displayName: displayName?.trim() || username,
+      password,
+      otp,
+      expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      attempts:  0,
+      sentAt:    now,
+    },
+    { upsert: true, new: true }
+  );
 
   res.json({ ok: true, maskedEmail: maskEmail(normalEmail) });
 });
@@ -124,30 +123,31 @@ router.post('/register/verify', async (req, res) => {
   if (!email || !otp) return res.status(400).json({ error: 'Email and code are required.' });
 
   const normalEmail = email.toLowerCase();
-  const entry = pending.get(normalEmail);
+  const entry = await PendingRegistration.findOne({ email: normalEmail });
 
   if (!entry) {
     return res.status(400).json({ error: 'No pending registration for this email. Please start over.' });
   }
-  if (Date.now() > entry.expiresAt) {
-    pending.delete(normalEmail);
+  if (Date.now() > entry.expiresAt.getTime()) {
+    await PendingRegistration.deleteOne({ email: normalEmail });
     return res.status(400).json({ error: 'Code expired. Please request a new one.' });
   }
 
   // Brute-force guard: max 5 attempts per OTP
   entry.attempts += 1;
   if (entry.attempts > 5) {
-    pending.delete(normalEmail);
+    await PendingRegistration.deleteOne({ email: normalEmail });
     return res.status(429).json({ error: 'Too many incorrect attempts. Please start registration again.' });
   }
 
   if (otp.trim() !== entry.otp) {
+    await entry.save();
     const left = 5 - entry.attempts;
     return res.status(400).json({ error: `Incorrect code. ${left} attempt${left === 1 ? '' : 's'} remaining.` });
   }
 
   // OTP is valid — create the user
-  pending.delete(normalEmail);
+  await PendingRegistration.deleteOne({ email: normalEmail });
 
   try {
     if (await User.findOne({ username: entry.username })) {
@@ -178,7 +178,7 @@ router.post('/register/resend', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'Email required.' });
 
   const normalEmail = email.toLowerCase();
-  const entry = pending.get(normalEmail);
+  const entry = await PendingRegistration.findOne({ email: normalEmail });
 
   if (!entry) {
     return res.status(400).json({ error: 'No pending registration. Please fill the form again.' });
@@ -186,11 +186,13 @@ router.post('/register/resend', async (req, res) => {
 
   const otp = generateOtp();
   entry.otp       = otp;
-  entry.expiresAt = Date.now() + OTP_TTL_MS;
+  entry.expiresAt = new Date(Date.now() + OTP_TTL_MS);
   entry.attempts  = 0;
+  entry.sentAt    = new Date();
 
   try {
     await sendOtpEmail(normalEmail, otp);
+    await entry.save();
     res.json({ ok: true });
   } catch (err) {
     console.error('OTP resend error:', err.message);

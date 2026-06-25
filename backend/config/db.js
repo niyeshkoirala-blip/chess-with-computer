@@ -7,7 +7,7 @@ async function connectDatabase() {
     throw new Error('MONGODB_URI is missing. Add it to your .env file.');
   }
 
-  mongoose.set('strictQuery', true);
+  mongoose.set('strictQuery', true);  
   await mongoose.connect(mongoUri, {
     serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 10000,
   });

@@ -8,7 +8,7 @@
 /* ─── DESIGN TOKENS ──────────────────────────────────────────────────────── */
 :root {
   /* Dark backgrounds */
-  --bg:          #18140F;
+  --bg:          #18140F;  
   --bg-deep:     #141009;
   --bg-card:     #1A1610;
   --bg-elevated: #221E18;
@@ -1088,12 +1088,16 @@ hr, .divider { border: none; border-top: 1px solid var(--amber-rule); margin: 16
 .speed-pill.selected { background: var(--green); border-color: var(--green); color: #fff; font-weight: 600; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────────────────── */
+
+/* ── Tablet (≤900px) ─────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   header { padding: 0 24px; }
   #lobby-page { padding: 0 24px; }
   .footer-inner { padding: 26px 24px 40px; }
   #matches-page { padding: 48px 24px; }
 }
+
+/* ── Small tablet / large phone (≤720px) ─────────────────────────────────── */
 @media (max-width: 720px) {
   header { padding: 0 16px; height: 56px; }
   #lobby-page { padding: 0 16px; }
@@ -1106,15 +1110,50 @@ hr, .divider { border: none; border-top: 1px solid var(--amber-rule); margin: 16
   .footer-inner { padding: 20px 16px 32px; }
   #matches-page { padding: 40px 16px; }
 
+  /* Game / replay: stack vertically */
   .game-layout   { flex-direction: column; align-items: center; }
   .replay-layout { flex-direction: column; align-items: center; }
+
+  /* Board width fix: sidebar is now below, not beside — calc(100vw - 50px)
+     accounts for 16px left pad + 16px right pad + 18px rank label column */
+  .chess-board { width: min(calc(100vw - 50px), 500px); }
+
+  /* Touch-friendly small buttons */
+  .btn-sm { padding: 9px 16px; }
+
+  /* Sidebar: horizontal strip of cards */
   .game-sidebar  { width: 100%; flex-direction: row; flex-wrap: wrap; }
   .sidebar-card  { flex: 1; min-width: 148px; }
+
+  /* Compact move list when sidebar is in a horizontal row */
+  .move-list { max-height: 140px; }
+
   .board-meta    { padding-left: 18px; }
   .replay-controls, .replay-speed-row, .replay-step-label { padding-left: 18px; }
   .match-card    { flex-wrap: wrap; }
   .match-actions { width: 100%; justify-content: flex-end; margin-top: 4px; }
 }
+
+/* ── Phone (≤540px) ───────────────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  /* Let hero panels shrink below 300px on narrow screens */
+  .hero-left, .hero-right { min-width: 0; }
+
+  /* Stack sidebar cards vertically; reorder so Controls comes before move list */
+  .game-sidebar { flex-direction: column; }
+  .sidebar-card { flex: none; min-width: 0; }
+  .game-sidebar .sidebar-card:nth-child(2) { order: 3; } /* Moves → last */
+  .game-sidebar .sidebar-card:nth-child(3) { order: 2; } /* Controls → second */
+  .move-list { max-height: 180px; }
+}
+
+/* ── Small phone header (≤480px) ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Hide username badge to free up header space for action buttons */
+  .user-badge { display: none; }
+}
+
+/* ── Tiny phone (≤440px) ─────────────────────────────────────────────────── */
 @media (max-width: 440px) {
   .mode-grid { grid-template-columns: 1fr; }
   .modal { padding: 24px 16px; }
